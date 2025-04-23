@@ -1,4 +1,3 @@
-
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,10 +23,10 @@ const devisFormSchema = z.object({
 
 type DevisFormData = z.infer<typeof devisFormSchema>;
 
-// Configuration EmailJS
-const SERVICE_ID = 'default_service'; // Remplacez par votre ID de service
-const TEMPLATE_ID = 'template_devis'; // Remplacez par votre ID de template
-const PUBLIC_KEY = 'YOUR_PUBLIC_KEY'; // Remplacez par votre clé publique EmailJS
+// Configuration EmailJS - REMPLACEZ PAR VOS PROPRES IDENTIFIANTS
+const SERVICE_ID = 'votre_service_id'; 
+const TEMPLATE_ID = 'votre_template_id'; 
+const PUBLIC_KEY = 'votre_public_key';
 
 const Devis = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,23 +41,23 @@ const Devis = () => {
     setIsSubmitting(true);
 
     const templateParams = {
-      from_name: data.nom,
-      from_email: data.email,
+      nom_client: data.nom,
+      email_client: data.email,
       telephone: data.telephone,
-      marque: data.marque,
-      modele: data.modele,
-      annee: data.annee,
+      marque_vehicule: data.marque,
+      modele_vehicule: data.modele,
+      annee_vehicule: data.annee,
       kilometrage: data.kilometrage,
-      description: data.description,
+      description_services: data.description,
     };
 
     emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY)
       .then((response) => {
-        console.log('SUCCESS!', response.status, response.text);
+        console.log('Devis envoyé avec succès !', response.status, response.text);
         toast.success("Votre demande de devis a été envoyée avec succès ! Nous vous contacterons bientôt.");
         reset();
       }, (err) => {
-        console.error('FAILED...', err);
+        console.error('Échec de l\'envoi du devis', err);
         toast.error("Échec de l'envoi du devis. Veuillez réessayer ou nous contacter directement.");
       })
       .finally(() => {
