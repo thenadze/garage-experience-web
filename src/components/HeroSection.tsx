@@ -2,6 +2,13 @@
 import { Button } from "@/components/ui/button";
 
 const HeroSection = () => {
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section id="accueil" className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden">
       {/* Background Image with Overlay */}
@@ -25,12 +32,17 @@ const HeroSection = () => {
             <Button size="lg" className="bg-garage-red hover:bg-garage-red/90 text-white font-bold">
               Devis en ligne
             </Button>
-            <Button size="lg" className="bg-white text-garage-black hover:bg-white/90 font-bold">
+            <Button 
+              size="lg" 
+              className="bg-white text-garage-black hover:bg-white/90 font-bold"
+              onClick={() => scrollToSection('vehicules')}
+            >
               Rechercher un véhicule
             </Button>
             <Button 
               size="lg" 
               className="bg-white text-garage-black hover:bg-white/90 font-bold"
+              onClick={() => scrollToSection('contact')}
             >
               Contact
             </Button>
