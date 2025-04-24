@@ -25,17 +25,26 @@ const Devis = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const [searchParams] = useSearchParams();
 
+  // Get the type from URL and validate it's one of our allowed types
+  const getInitialServiceType = (): DevisFormData["typeService"] => {
+    const type = searchParams.get("type");
+    if (type && (type === "reparation" || type === "entretien" || type === "tuning" || type === "vente")) {
+      return type;
+    }
+    return "vente"; // Default value
+  };
+
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<DevisFormData>({
     resolver: zodResolver(devisFormSchema),
     defaultValues: {
-      typeService: searchParams.get("type") || "vente"
+      typeService: getInitialServiceType()
     }
   });
 
   useEffect(() => {
     const type = searchParams.get("type");
-    if (type && Object.keys(serviceTypes).includes(type)) {
-      setValue("typeService", type as DevisFormData["typeService"]);
+    if (type && (type === "reparation" || type === "entretien" || type === "tuning" || type === "vente")) {
+      setValue("typeService", type);
     }
   }, [searchParams, setValue]);
 
@@ -86,7 +95,7 @@ const Devis = () => {
                 </label>
                 <Select 
                   onValueChange={(value) => setValue("typeService", value as DevisFormData["typeService"])} 
-                  defaultValue="vente"
+                  defaultValue={getInitialServiceType()}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionnez un type de service" />
