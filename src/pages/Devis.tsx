@@ -1,3 +1,4 @@
+
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +50,7 @@ const Devis = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<DevisFormData>({
+  const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<DevisFormData>({
     resolver: zodResolver(devisFormSchema),
     defaultValues: {
       typeService: "vente"
