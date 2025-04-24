@@ -30,7 +30,7 @@ const HeroSection = () => {
             </Button>
             <Button 
               size="lg" 
-              className="bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 font-bold transition-colors duration-300"
+              className="bg-white text-garage-black hover:bg-white/90 font-bold"
             >
               Contact
             </Button>
