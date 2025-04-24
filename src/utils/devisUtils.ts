@@ -1,4 +1,3 @@
-
 export const getServicePlaceholder = (service: string) => {
   switch (service) {
     case "reparation":
@@ -14,7 +13,7 @@ export const getServicePlaceholder = (service: string) => {
   }
 };
 
-// Configuration EmailJS - REMPLACEZ PAR VOS PROPRES IDENTIFIANTS
-export const SERVICE_ID = 'votre_service_id'; 
-export const TEMPLATE_ID = 'votre_template_id'; 
-export const PUBLIC_KEY = 'votre_public_key';
+// Configuration EmailJS
+export const SERVICE_ID = 'YOUR_SERVICE_ID'; // Remplacez par votre Service ID
+export const TEMPLATE_ID = 'YOUR_TEMPLATE_ID'; // Remplacez par votre Template ID
+export const PUBLIC_KEY = 'YOUR_PUBLIC_KEY'; // Remplacez par votre Public Key
