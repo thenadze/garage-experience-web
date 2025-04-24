@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight, Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,34 +50,55 @@ const Devis = () => {
 
   const selectedService = watch("typeService");
 
-  const onSubmit = (data: DevisFormData) => {
+  const onSubmit = async (data: DevisFormData) => {
     if (!formRef.current) return;
     setIsSubmitting(true);
 
-    const templateParams = {
-      nom_client: data.nom,
-      email_client: data.email,
-      telephone: data.telephone,
-      type_service: serviceTypes[data.typeService],
-      marque_vehicule: data.marque,
-      modele_vehicule: data.modele,
-      annee_vehicule: data.annee,
-      kilometrage: data.kilometrage,
-      description_services: data.description,
-    };
+    try {
+      // 1. Save quote to Supabase
+      const { data: quoteData, error: quoteError } = await supabase
+        .from('quotes')
+        .insert({
+          first_name: data.nom,
+          last_name: '', // Note: Might want to update devisSchema to include last_name
+          email: data.email,
+          phone: data.telephone,
+          service: serviceTypes[data.typeService],
+          vehicle_model: data.modele,
+          vehicle_brand: data.marque,
+          year: data.annee,
+          mileage: data.kilometrage,
+          description: data.description,
+          status: 'pending'
+        });
 
-    emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY)
-      .then((response) => {
-        console.log('Devis envoyé avec succès !', response.status, response.text);
-        toast.success("Votre demande de devis a été envoyée avec succès ! Nous vous contacterons bientôt.");
-        reset();
-      }, (err) => {
-        console.error('Échec de l\'envoi du devis', err);
-        toast.error("Échec de l'envoi du devis. Veuillez réessayer ou nous contacter directement.");
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
+      if (quoteError) throw quoteError;
+
+      // 2. Send email via EmailJS
+      const templateParams = {
+        nom_client: data.nom,
+        email_client: data.email,
+        telephone: data.telephone,
+        type_service: serviceTypes[data.typeService],
+        marque_vehicule: data.marque,
+        modele_vehicule: data.modele,
+        annee_vehicule: data.annee,
+        kilometrage: data.kilometrage,
+        description_services: data.description,
+      };
+
+      const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
+
+      // 3. Show success toast
+      toast.success("Votre demande de devis a été envoyée avec succès ! Nous vous contacterons bientôt.");
+      reset();
+      navigate('/');
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi du devis', error);
+      toast.error("Échec de l'envoi du devis. Veuillez réessayer ou nous contacter directement.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
