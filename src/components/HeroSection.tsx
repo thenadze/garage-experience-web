@@ -1,17 +1,17 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const HeroSection = () => {
   const navigate = useNavigate();
   const parallaxRef = useRef<HTMLDivElement>(null);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -33,6 +33,7 @@ const HeroSection = () => {
   };
 
   const handleDevisSelection = (type: string) => {
+    setIsPopoverOpen(false);
     navigate(`/devis?type=${type}`);
   };
 
@@ -75,27 +76,41 @@ const HeroSection = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 opacity-0 animate-slide-up" style={{animationDelay: '900ms'}}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+              <PopoverTrigger asChild>
                 <Button size="lg" className="bg-garage-red hover:bg-garage-red/90 text-white font-bold hover-glow click-effect">
                   Devis en ligne
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-white text-gray-700 font-medium animate-fade-in">
-                <DropdownMenuItem onClick={() => handleDevisSelection('reparation')} className="click-effect hover:bg-garage-red/10">
-                  Réparation
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleDevisSelection('entretien')} className="click-effect hover:bg-garage-red/10">
-                  Entretien
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleDevisSelection('tuning')} className="click-effect hover:bg-garage-red/10">
-                  Tuning
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleDevisSelection('vente')} className="click-effect hover:bg-garage-red/10">
-                  Achat/Vente véhicule
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 bg-white border-none p-0 rounded-md shadow-lg z-50">
+                <div className="py-2">
+                  <button
+                    onClick={() => handleDevisSelection('reparation')}
+                    className="w-full px-4 py-2 text-left text-gray-700 font-medium hover:bg-garage-red/10 transition-colors click-effect"
+                  >
+                    Réparation
+                  </button>
+                  <button
+                    onClick={() => handleDevisSelection('entretien')}
+                    className="w-full px-4 py-2 text-left text-gray-700 font-medium hover:bg-garage-red/10 transition-colors click-effect"
+                  >
+                    Entretien
+                  </button>
+                  <button
+                    onClick={() => handleDevisSelection('tuning')}
+                    className="w-full px-4 py-2 text-left text-gray-700 font-medium hover:bg-garage-red/10 transition-colors click-effect"
+                  >
+                    Tuning
+                  </button>
+                  <button
+                    onClick={() => handleDevisSelection('vente')}
+                    className="w-full px-4 py-2 text-left text-gray-700 font-medium hover:bg-garage-red/10 transition-colors click-effect"
+                  >
+                    Achat/Vente véhicule
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button 
               size="lg" 
               className="bg-white text-garage-black hover:bg-white/90 font-bold hover-lift click-effect"
