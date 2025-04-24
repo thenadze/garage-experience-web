@@ -81,7 +81,7 @@ const HeroSection = () => {
                   Devis en ligne
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-white animate-fade-in">
+              <DropdownMenuContent className="w-56 bg-white text-gray-700 font-medium animate-fade-in">
                 <DropdownMenuItem onClick={() => handleDevisSelection('reparation')} className="click-effect hover:bg-garage-red/10">
                   Réparation
                 </DropdownMenuItem>
