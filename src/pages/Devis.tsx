@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight, Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,11 +57,11 @@ const Devis = () => {
 
     try {
       // 1. Save quote to Supabase
-      const { data: quoteData, error: quoteError } = await supabase
+      const { error: quoteError } = await supabase
         .from('quotes')
         .insert({
           first_name: data.nom,
-          last_name: '', // Note: Might want to update devisSchema to include last_name
+          last_name: '', // Default empty string for now
           email: data.email,
           phone: data.telephone,
           service: serviceTypes[data.typeService],
@@ -89,7 +90,7 @@ const Devis = () => {
 
       const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
 
-      // 3. Show success toast
+      // 3. Show success toast and redirect
       toast.success("Votre demande de devis a été envoyée avec succès ! Nous vous contacterons bientôt.");
       reset();
       navigate('/');
