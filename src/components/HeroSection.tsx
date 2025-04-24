@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
@@ -53,7 +52,7 @@ const HeroSection = () => {
           poster="https://images.unsplash.com/photo-1567789884554-0b844b686158?q=80&w=1932&auto=format&fit=crop"
         >
           <source 
-            src="https://cdn.coverr.co/videos/coverr-car-dashboard-lights-at-night-4552/1080p.mp4" 
+            src="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" 
             type="video/mp4" 
           />
           {/* Fallback to background image if video fails to load */}
