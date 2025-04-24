@@ -3,8 +3,55 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+// Schema de validation pour le formulaire de contact
+const contactFormSchema = z.object({
+  nom: z.string().min(2, { message: "Le nom doit contenir au moins 2 caractères." }),
+  email: z.string().email({ message: "Adresse email invalide." }),
+  sujet: z.string().min(2, { message: "Le sujet est requis." }),
+  message: z.string().min(10, { message: "Votre message doit contenir au moins 10 caractères." }),
+});
+
+type ContactFormData = z.infer<typeof contactFormSchema>;
 
 const ContactSection = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const form = useForm<ContactFormData>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: {
+      nom: "",
+      email: "",
+      sujet: "",
+      message: "",
+    },
+  });
+
+  const onSubmit = (data: ContactFormData) => {
+    setIsSubmitting(true);
+    
+    // Simuler l'envoi du formulaire
+    setTimeout(() => {
+      console.log("Données du formulaire envoyées :", data);
+      toast.success("Votre message a été envoyé avec succès ! Nous vous répondrons bientôt.");
+      form.reset();
+      setIsSubmitting(false);
+    }, 1000);
+  };
+
   return (
     <section id="contact" className="py-20 bg-garage-light-gray">
       <div className="container mx-auto px-4">
@@ -18,37 +65,78 @@ const ContactSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div className="bg-white p-8 rounded-lg shadow-md">
             <h3 className="text-2xl font-bold mb-6">Nous contacter</h3>
-            <form>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Nom
-                  </label>
-                  <Input id="name" placeholder="Votre nom" />
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="nom"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nom</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Votre nom" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="Votre email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <Input id="email" type="email" placeholder="Votre email" />
-                </div>
-              </div>
-              <div className="mb-4">
-                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
-                  Sujet
-                </label>
-                <Input id="subject" placeholder="Sujet de votre message" />
-              </div>
-              <div className="mb-6">
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                  Message
-                </label>
-                <Textarea id="message" placeholder="Votre message" rows={5} />
-              </div>
-              <Button className="w-full bg-garage-red hover:bg-garage-red/90 text-white font-bold">
-                Envoyer
-              </Button>
-            </form>
+
+                <FormField
+                  control={form.control}
+                  name="sujet"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sujet</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Sujet de votre message" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Message</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Votre message" 
+                          rows={5} 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-garage-red hover:bg-garage-red/90 text-white font-bold"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Envoi en cours..." : "Envoyer"}
+                </Button>
+              </form>
+            </Form>
           </div>
 
           <div>
