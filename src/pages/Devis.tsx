@@ -8,12 +8,29 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import emailjs from '@emailjs/browser';
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const serviceTypes = {
+  reparation: "Réparation",
+  entretien: "Entretien",
+  tuning: "Tuning",
+  vente: "Achat/Vente véhicule"
+} as const;
 
 // Schema de validation pour le formulaire de devis
 const devisFormSchema = z.object({
   nom: z.string().min(2, { message: "Le nom doit contenir au moins 2 caractères." }),
   email: z.string().email({ message: "Adresse email invalide." }),
   telephone: z.string().min(10, { message: "Numéro de téléphone invalide." }),
+  typeService: z.enum(["reparation", "entretien", "tuning", "vente"], {
+    required_error: "Veuillez sélectionner un type de service",
+  }),
   marque: z.string().min(2, { message: "La marque du véhicule est requise." }),
   modele: z.string().min(2, { message: "Le modèle du véhicule est requis." }),
   annee: z.string().min(4, { message: "L'année du véhicule est requise." }),
@@ -32,9 +49,14 @@ const Devis = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<DevisFormData>({
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<DevisFormData>({
     resolver: zodResolver(devisFormSchema),
+    defaultValues: {
+      typeService: "vente"
+    }
   });
+
+  const selectedService = watch("typeService");
 
   const onSubmit = (data: DevisFormData) => {
     if (!formRef.current) return;
@@ -44,6 +66,7 @@ const Devis = () => {
       nom_client: data.nom,
       email_client: data.email,
       telephone: data.telephone,
+      type_service: serviceTypes[data.typeService],
       marque_vehicule: data.marque,
       modele_vehicule: data.modele,
       annee_vehicule: data.annee,
@@ -65,6 +88,21 @@ const Devis = () => {
       });
   };
 
+  const getServicePlaceholder = (service: string) => {
+    switch (service) {
+      case "reparation":
+        return "Ex: Réparation moteur, carrosserie, etc.";
+      case "entretien":
+        return "Ex: Vidange, révision, pneumatiques, etc.";
+      case "tuning":
+        return "Ex: Kit carrosserie, jantes, échappement sport, etc.";
+      case "vente":
+        return "Ex: Je souhaite acheter ce véhicule, informations supplémentaires...";
+      default:
+        return "Décrivez votre demande...";
+    }
+  };
+
   return (
     <div className="min-h-screen py-16 bg-garage-light-gray">
       <div className="container mx-auto px-4">
@@ -74,6 +112,31 @@ const Devis = () => {
           </h1>
           <div className="bg-white rounded-lg shadow-md p-8">
             <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              
+              {/* Type de service */}
+              <div className="space-y-2">
+                <label htmlFor="typeService" className="block text-sm font-medium text-gray-700">
+                  Type de service
+                </label>
+                <Select 
+                  onValueChange={(value) => setValue("typeService", value as DevisFormData["typeService"])} 
+                  defaultValue="vente"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionnez un type de service" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="reparation">Réparation</SelectItem>
+                    <SelectItem value="entretien">Entretien</SelectItem>
+                    <SelectItem value="tuning">Tuning</SelectItem>
+                    <SelectItem value="vente">Achat/Vente véhicule</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.typeService && (
+                  <p className="text-red-500 text-sm">{errors.typeService.message}</p>
+                )}
+              </div>
+
               {/* Informations personnelles */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -182,11 +245,11 @@ const Devis = () => {
 
               <div className="space-y-2">
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Description des services souhaités
+                  Description de votre demande
                 </label>
                 <Textarea
                   id="description"
-                  placeholder="Décrivez les services dont vous avez besoin (réparation, entretien, etc.)"
+                  placeholder={getServicePlaceholder(selectedService)}
                   className={errors.description ? 'border-red-500' : ''}
                   rows={5}
                   {...register("description")}
