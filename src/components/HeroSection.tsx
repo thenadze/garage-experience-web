@@ -1,12 +1,25 @@
 
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+  
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleDevisSelection = (type: string) => {
+    navigate(`/devis?type=${type}`);
   };
 
   return (
@@ -29,9 +42,27 @@ const HeroSection = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button size="lg" className="bg-garage-red hover:bg-garage-red/90 text-white font-bold">
-              Devis en ligne
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="lg" className="bg-garage-red hover:bg-garage-red/90 text-white font-bold">
+                  Devis en ligne
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-white">
+                <DropdownMenuItem onClick={() => handleDevisSelection('reparation')}>
+                  Réparation
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDevisSelection('entretien')}>
+                  Entretien
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDevisSelection('tuning')}>
+                  Tuning
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDevisSelection('vente')}>
+                  Achat/Vente véhicule
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button 
               size="lg" 
               className="bg-white text-garage-black hover:bg-white/90 font-bold"

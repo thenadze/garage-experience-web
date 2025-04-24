@@ -2,11 +2,12 @@
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import emailjs from '@emailjs/browser';
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -22,13 +23,21 @@ import { getServicePlaceholder, SERVICE_ID, TEMPLATE_ID, PUBLIC_KEY } from "@/ut
 const Devis = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const [searchParams] = useSearchParams();
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<DevisFormData>({
     resolver: zodResolver(devisFormSchema),
     defaultValues: {
-      typeService: "vente"
+      typeService: searchParams.get("type") || "vente"
     }
   });
+
+  useEffect(() => {
+    const type = searchParams.get("type");
+    if (type && Object.keys(serviceTypes).includes(type)) {
+      setValue("typeService", type as DevisFormData["typeService"]);
+    }
+  }, [searchParams, setValue]);
 
   const selectedService = watch("typeService");
 
