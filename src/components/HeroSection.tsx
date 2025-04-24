@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 
 const HeroSection = () => {
@@ -29,8 +30,7 @@ const HeroSection = () => {
             </Button>
             <Button 
               size="lg" 
-              variant="outline" 
-              className="border-white text-white hover:bg-[#9b87f5] hover:text-dark-purple hover:border-[#9b87f5] font-bold transition-all duration-300 ease-in-out shadow-md"
+              className="bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 font-bold transition-colors duration-300"
             >
               Contact
             </Button>
