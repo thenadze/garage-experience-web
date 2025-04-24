@@ -28,7 +28,11 @@ const HeroSection = () => {
             <Button size="lg" className="bg-white text-garage-black hover:bg-white/90 font-bold">
               Rechercher un véhicule
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-bold">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-white text-white hover:bg-white/20 font-bold transition-colors duration-300 ease-in-out"
+            >
               Contact
             </Button>
           </div>
