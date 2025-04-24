@@ -1,12 +1,10 @@
 
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import React, { useRef, useState } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import emailjs from '@emailjs/browser';
 import { toast } from "sonner";
 import {
@@ -16,35 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const serviceTypes = {
-  reparation: "Réparation",
-  entretien: "Entretien",
-  tuning: "Tuning",
-  vente: "Achat/Vente véhicule"
-} as const;
-
-// Schema de validation pour le formulaire de devis
-const devisFormSchema = z.object({
-  nom: z.string().min(2, { message: "Le nom doit contenir au moins 2 caractères." }),
-  email: z.string().email({ message: "Adresse email invalide." }),
-  telephone: z.string().min(10, { message: "Numéro de téléphone invalide." }),
-  typeService: z.enum(["reparation", "entretien", "tuning", "vente"], {
-    required_error: "Veuillez sélectionner un type de service",
-  }),
-  marque: z.string().min(2, { message: "La marque du véhicule est requise." }),
-  modele: z.string().min(2, { message: "Le modèle du véhicule est requis." }),
-  annee: z.string().min(4, { message: "L'année du véhicule est requise." }),
-  kilometrage: z.string().min(1, { message: "Le kilométrage est requis." }),
-  description: z.string().min(10, { message: "Veuillez décrire les services souhaités (minimum 10 caractères)." }),
-});
-
-type DevisFormData = z.infer<typeof devisFormSchema>;
-
-// Configuration EmailJS - REMPLACEZ PAR VOS PROPRES IDENTIFIANTS
-const SERVICE_ID = 'votre_service_id'; 
-const TEMPLATE_ID = 'votre_template_id'; 
-const PUBLIC_KEY = 'votre_public_key';
+import { PersonalInfoFields } from "@/components/devis/PersonalInfoFields";
+import { VehicleInfoFields } from "@/components/devis/VehicleInfoFields";
+import { devisFormSchema, serviceTypes, type DevisFormData } from "@/schemas/devisSchema";
+import { getServicePlaceholder, SERVICE_ID, TEMPLATE_ID, PUBLIC_KEY } from "@/utils/devisUtils";
 
 const Devis = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,21 +62,6 @@ const Devis = () => {
       });
   };
 
-  const getServicePlaceholder = (service: string) => {
-    switch (service) {
-      case "reparation":
-        return "Ex: Réparation moteur, carrosserie, etc.";
-      case "entretien":
-        return "Ex: Vidange, révision, pneumatiques, etc.";
-      case "tuning":
-        return "Ex: Kit carrosserie, jantes, échappement sport, etc.";
-      case "vente":
-        return "Ex: Je souhaite acheter ce véhicule, informations supplémentaires...";
-      default:
-        return "Décrivez votre demande...";
-    }
-  };
-
   return (
     <div className="min-h-screen py-16 bg-garage-light-gray">
       <div className="container mx-auto px-4">
@@ -113,8 +71,6 @@ const Devis = () => {
           </h1>
           <div className="bg-white rounded-lg shadow-md p-8">
             <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              
-              {/* Type de service */}
               <div className="space-y-2">
                 <label htmlFor="typeService" className="block text-sm font-medium text-gray-700">
                   Type de service
@@ -138,111 +94,9 @@ const Devis = () => {
                 )}
               </div>
 
-              {/* Informations personnelles */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="nom" className="block text-sm font-medium text-gray-700">
-                    Nom complet
-                  </label>
-                  <Input
-                    id="nom"
-                    type="text"
-                    placeholder="Votre nom"
-                    className={errors.nom ? 'border-red-500' : ''}
-                    {...register("nom")}
-                  />
-                  {errors.nom && <p className="text-red-500 text-sm">{errors.nom.message}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="votre@email.com"
-                    className={errors.email ? 'border-red-500' : ''}
-                    {...register("email")}
-                  />
-                  {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="telephone" className="block text-sm font-medium text-gray-700">
-                  Téléphone
-                </label>
-                <Input
-                  id="telephone"
-                  type="tel"
-                  placeholder="Votre numéro de téléphone"
-                  className={errors.telephone ? 'border-red-500' : ''}
-                  {...register("telephone")}
-                />
-                {errors.telephone && <p className="text-red-500 text-sm">{errors.telephone.message}</p>}
-              </div>
-
-              {/* Informations du véhicule */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="marque" className="block text-sm font-medium text-gray-700">
-                    Marque du véhicule
-                  </label>
-                  <Input
-                    id="marque"
-                    type="text"
-                    placeholder="Ex: Renault"
-                    className={errors.marque ? 'border-red-500' : ''}
-                    {...register("marque")}
-                  />
-                  {errors.marque && <p className="text-red-500 text-sm">{errors.marque.message}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="modele" className="block text-sm font-medium text-gray-700">
-                    Modèle
-                  </label>
-                  <Input
-                    id="modele"
-                    type="text"
-                    placeholder="Ex: Clio"
-                    className={errors.modele ? 'border-red-500' : ''}
-                    {...register("modele")}
-                  />
-                  {errors.modele && <p className="text-red-500 text-sm">{errors.modele.message}</p>}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="annee" className="block text-sm font-medium text-gray-700">
-                    Année
-                  </label>
-                  <Input
-                    id="annee"
-                    type="text"
-                    placeholder="Ex: 2020"
-                    className={errors.annee ? 'border-red-500' : ''}
-                    {...register("annee")}
-                  />
-                  {errors.annee && <p className="text-red-500 text-sm">{errors.annee.message}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="kilometrage" className="block text-sm font-medium text-gray-700">
-                    Kilométrage
-                  </label>
-                  <Input
-                    id="kilometrage"
-                    type="text"
-                    placeholder="Ex: 50000"
-                    className={errors.kilometrage ? 'border-red-500' : ''}
-                    {...register("kilometrage")}
-                  />
-                  {errors.kilometrage && <p className="text-red-500 text-sm">{errors.kilometrage.message}</p>}
-                </div>
-              </div>
+              <PersonalInfoFields register={register} errors={errors} />
+              
+              <VehicleInfoFields register={register} errors={errors} />
 
               <div className="space-y-2">
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">
