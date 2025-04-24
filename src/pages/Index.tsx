@@ -6,35 +6,37 @@ import ServicesSection from "@/components/ServicesSection";
 import CarsSection from "@/components/CarsSection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
+import LoadingAnimation from "@/components/LoadingAnimation";
 
 const Index = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simuler un chargement initial
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1000);
+    }, 2500); // 2.5 secondes de chargement
 
     return () => clearTimeout(timer);
   }, []);
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white">
-        <div className="relative w-24 h-24">
-          {/* Loader avec animation personnalisée */}
-          <div className="absolute inset-0 border-4 border-t-garage-red border-r-garage-black/20 border-b-garage-black/20 border-l-garage-black/20 rounded-full animate-spin"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xs font-bold text-garage-red animate-pulse">GARAGE</span>
-          </div>
+      <div className="fixed inset-0 bg-garage-black">
+        <LoadingAnimation />
+        <div className="fixed inset-0 z-10 flex items-center justify-center">
+          <h1 
+            className="text-4xl md:text-6xl font-light tracking-wider text-white/90 animate-fade-in"
+            style={{ fontFamily: "'Montserrat', sans-serif" }}
+          >
+            ED CLUICI
+          </h1>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen animate-fade-in">
       <Header />
       <HeroSection />
       <ServicesSection />
