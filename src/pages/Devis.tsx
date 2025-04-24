@@ -1,5 +1,4 @@
-
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import React, { useRef, useState, useEffect } from 'react';
@@ -7,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import emailjs from '@emailjs/browser';
 import { toast } from "sonner";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -24,8 +23,8 @@ const Devis = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  // Get the type from URL and validate it's one of our allowed types
   const getInitialServiceType = (): DevisFormData["typeService"] => {
     const type = searchParams.get("type");
     if (type && (type === "reparation" || type === "entretien" || type === "tuning" || type === "vente")) {
@@ -84,6 +83,14 @@ const Devis = () => {
     <div className="min-h-screen py-16 bg-garage-light-gray">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto">
+          <Button 
+            variant="ghost" 
+            className="mb-4"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="mr-2" />
+            Retour
+          </Button>
           <h1 className="text-3xl md:text-4xl font-bold text-center mb-8">
             Demande de Devis
           </h1>

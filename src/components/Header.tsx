@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Menu } from 'lucide-react';
@@ -41,12 +40,6 @@ const Header = () => {
             <a href="#contact" className="font-medium hover:text-garage-red transition-colors">Contact</a>
           </nav>
 
-          <div className="hidden md:block">
-            <Button className="bg-garage-red hover:bg-garage-red/90 text-white">
-              Devis en ligne
-            </Button>
-          </div>
-
           {/* Mobile Menu Button */}
           <button 
             className="md:hidden flex items-center" 
@@ -88,9 +81,6 @@ const Header = () => {
               >
                 Contact
               </a>
-              <Button className="bg-garage-red hover:bg-garage-red/90 text-white w-full">
-                Devis en ligne
-              </Button>
             </nav>
           </div>
         )}
