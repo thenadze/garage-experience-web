@@ -38,13 +38,31 @@ const HeroSection = () => {
 
   return (
     <section id="accueil" className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden">
-      {/* Background Image with Overlay */}
+      {/* Overlay gradient */}
       <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-black/70 to-black/50 z-10" />
-      <div 
-        ref={parallaxRef}
-        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat z-0"
-        style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1567789884554-0b844b686158?q=80&w=1932&auto=format&fit=crop)', transform: 'translateY(0)' }}
-      ></div>
+      
+      {/* Video Background */}
+      <div ref={parallaxRef} className="absolute inset-0 w-full h-full z-0">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="w-full h-full object-cover"
+          poster="https://images.unsplash.com/photo-1567789884554-0b844b686158?q=80&w=1932&auto=format&fit=crop"
+        >
+          <source 
+            src="https://cdn.coverr.co/videos/coverr-car-dashboard-lights-at-night-4552/1080p.mp4" 
+            type="video/mp4" 
+          />
+          {/* Fallback to background image if video fails to load */}
+          <img 
+            src="https://images.unsplash.com/photo-1567789884554-0b844b686158?q=80&w=1932&auto=format&fit=crop"
+            alt="Garage background"
+            className="w-full h-full object-cover"
+          />
+        </video>
+      </div>
 
       {/* Content */}
       <div className="container mx-auto px-4 z-20 text-white">
