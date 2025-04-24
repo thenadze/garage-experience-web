@@ -80,6 +80,11 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    @apply scroll-behavior-smooth;
+  }
+  
   body {
     @apply bg-background text-foreground font-montserrat;
   }
@@ -87,12 +92,60 @@
 
 /* Animations */
 @layer utilities {
+  .scroll-behavior-smooth {
+    scroll-behavior: smooth;
+  }
+  
   .animate-fade-in {
-    animation: fadeIn 0.6s ease-in;
+    animation: fadeIn 0.8s ease-in-out forwards;
+    opacity: 0;
   }
   
   .animate-slide-up {
-    animation: slideUp 0.8s ease-in-out;
+    animation: slideUp 0.6s ease-out forwards;
+    opacity: 0;
+  }
+  
+  .animate-slide-down {
+    animation: slideDown 0.6s ease-out forwards;
+    opacity: 0;
+  }
+  
+  .animate-slide-in-right {
+    animation: slideInRight 0.6s ease-out forwards;
+    opacity: 0;
+  }
+  
+  .animate-scale {
+    animation: scale 0.6s ease-out forwards;
+    opacity: 0;
+  }
+  
+  .stagger-delay-1 { animation-delay: 100ms; }
+  .stagger-delay-2 { animation-delay: 200ms; }
+  .stagger-delay-3 { animation-delay: 300ms; }
+  .stagger-delay-4 { animation-delay: 400ms; }
+  .stagger-delay-5 { animation-delay: 500ms; }
+  
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg;
+  }
+  
+  .hover-scale {
+    @apply transition-all duration-300 hover:scale-105 hover:shadow-md;
+  }
+  
+  .hover-glow {
+    @apply transition-all duration-300 hover:shadow-[0_0_15px_rgba(234,56,76,0.6)];
+  }
+  
+  .click-effect {
+    @apply active:scale-95 transition-transform duration-150;
+  }
+  
+  .parallax {
+    @apply transition-transform duration-300;
+    transform: translateY(calc(var(--scroll-y) * 0.1));
   }
 }
 
@@ -104,4 +157,25 @@
 @keyframes slideUp {
   from { transform: translateY(30px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(-30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes scale {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
