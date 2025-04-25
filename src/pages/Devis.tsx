@@ -19,10 +19,18 @@ import {
 import { PersonalInfoFields } from "@/components/devis/PersonalInfoFields";
 import { VehicleInfoFields } from "@/components/devis/VehicleInfoFields";
 import { devisFormSchema, serviceTypes, type DevisFormData } from "@/schemas/devisSchema";
-import { getServicePlaceholder, SERVICE_ID, TEMPLATE_ID, PUBLIC_KEY } from "@/utils/devisUtils";
+import { 
+  getServicePlaceholder, 
+  SERVICE_ID, 
+  TEMPLATE_ID, 
+  PUBLIC_KEY,
+  handleEmailjsResponse 
+} from "@/utils/devisUtils";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const Devis = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailjsError, setEmailjsError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -54,6 +62,7 @@ const Devis = () => {
   const onSubmit = async (data: DevisFormData) => {
     if (!formRef.current) return;
     setIsSubmitting(true);
+    setEmailjsError(null);
 
     try {
       console.log("Préparation de la soumission du devis...");
@@ -64,7 +73,7 @@ const Devis = () => {
         last_name: '',
         email: data.email,
         phone: data.telephone,
-        service_id: null, // Champ requis par le schéma mais nous n'avons pas l'ID
+        service_id: null, 
         vehicle_model: data.modele,
         message: `${data.marque} ${data.modele} (${data.annee}, ${data.kilometrage} km): ${data.description}`,
         status: 'pending'
@@ -103,26 +112,40 @@ const Devis = () => {
         template_params: templateParams
       });
 
-      const emailResponse = await emailjs.send(
-        SERVICE_ID, 
-        TEMPLATE_ID, 
-        templateParams, 
-        PUBLIC_KEY
-      );
-      
-      console.log("Réponse EmailJS:", emailResponse);
-      
-      if (emailResponse.status !== 200) {
-        console.warn('Email envoyé avec un statut non-200:', emailResponse.status);
-        toast.warning("Le devis a été enregistré mais l'email peut ne pas avoir été envoyé correctement.");
-      } else {
-        console.log("Email envoyé avec succès");
-        toast.success("Votre demande de devis a été envoyée avec succès ! Nous vous contacterons bientôt.");
+      try {
+        const emailResponse = await emailjs.send(
+          SERVICE_ID, 
+          TEMPLATE_ID, 
+          templateParams, 
+          PUBLIC_KEY
+        );
+        
+        console.log("Réponse EmailJS:", emailResponse);
+        
+        const { success, message } = handleEmailjsResponse(emailResponse);
+        
+        if (!success) {
+          setEmailjsError(message);
+          toast.error(message);
+        } else {
+          console.log("Email envoyé avec succès");
+          toast.success("Votre demande de devis a été envoyée avec succès ! Nous vous contacterons bientôt.");
+          
+          // Réinitialisation du formulaire et redirection
+          reset();
+          navigate('/');
+        }
+      } catch (emailError: any) {
+        console.error('Erreur EmailJS détaillée:', emailError);
+        
+        if (emailError.text && typeof emailError.text === 'string') {
+          setEmailjsError(emailError.text);
+        } else {
+          setEmailjsError("Erreur lors de l'envoi de l'email. Vérifiez vos identifiants EmailJS.");
+        }
+        
+        toast.error("Le devis a été enregistré mais l'email n'a pas pu être envoyé.");
       }
-
-      // 3. Réinitialisation du formulaire et redirection
-      reset();
-      navigate('/');
     } catch (error: any) {
       console.error('Erreur lors de l\'envoi du devis:', error);
       
@@ -156,6 +179,17 @@ const Devis = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-center mb-8">
             Demande de Devis
           </h1>
+          
+          {emailjsError && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertTitle>Erreur de configuration EmailJS</AlertTitle>
+              <AlertDescription>
+                {emailjsError}
+                <p className="mt-2">Le devis a bien été enregistré dans notre système et nous vous contacterons bientôt.</p>
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="bg-white rounded-lg shadow-md p-8">
             <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-2">
