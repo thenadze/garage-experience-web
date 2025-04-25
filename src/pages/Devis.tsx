@@ -64,12 +64,9 @@ const Devis = () => {
           last_name: '',
           email: data.email,
           phone: data.telephone,
-          service: serviceTypes[data.typeService],
+          // Using service_id instead of service which doesn't exist in the schema
+          service_id: null, // We don't have this ID, but the field exists in the schema
           vehicle_model: data.modele,
-          // Removing fields that don't exist in the database schema
-          // vehicle_brand: data.marque,
-          // year: parseInt(data.annee),
-          // mileage: parseInt(data.kilometrage),
           message: `${data.marque} ${data.modele} (${data.annee}, ${data.kilometrage} km): ${data.description}`,
           status: 'pending'
         });
