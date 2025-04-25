@@ -9,7 +9,8 @@ import {
   SERVICE_ID, 
   TEMPLATE_ID, 
   PUBLIC_KEY,
-  handleEmailjsResponse 
+  handleEmailjsResponse,
+  mapFormToTemplateParams
 } from "@/utils/devisUtils";
 
 export const useDevisForm = () => {
@@ -45,17 +46,9 @@ export const useDevisForm = () => {
       }
       
       // 2. Envoi de l'email via EmailJS
-      const templateParams = {
-        nom_client: data.nom,
-        email_client: data.email,
-        telephone: data.telephone,
-        type_service: serviceTypes[data.typeService],
-        marque_vehicule: data.marque,
-        modele_vehicule: data.modele,
-        annee_vehicule: data.annee,
-        kilometrage: data.kilometrage,
-        description_services: data.description,
-      };
+      const templateParams = mapFormToTemplateParams(data);
+      
+      console.log("Paramètres du template:", templateParams);
 
       try {
         const emailResponse = await emailjs.send(
@@ -64,6 +57,8 @@ export const useDevisForm = () => {
           templateParams, 
           PUBLIC_KEY
         );
+        
+        console.log("Réponse EmailJS:", emailResponse);
         
         const { success, message } = handleEmailjsResponse(emailResponse);
         
@@ -76,6 +71,7 @@ export const useDevisForm = () => {
           return true;
         }
       } catch (emailError: any) {
+        console.error("Erreur EmailJS complète:", emailError);
         setEmailjsError(emailError.text || "Erreur lors de l'envoi de l'email");
         toast.error("Le devis a été enregistré mais l'email n'a pas pu être envoyé.");
       }
@@ -95,4 +91,3 @@ export const useDevisForm = () => {
     handleSubmit
   };
 };
-

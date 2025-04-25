@@ -1,4 +1,3 @@
-
 export const getServicePlaceholder = (service: string) => {
   switch (service) {
     case "reparation":
@@ -37,4 +36,19 @@ export const handleEmailjsResponse = (response: any) => {
   }
   
   return { success: false, message: errorMessage };
+};
+
+// Fonction pour mapper les données du formulaire aux variables du template EmailJS
+export const mapFormToTemplateParams = (data: any) => {
+  return {
+    nom_client: data.nom,
+    email_client: data.email,
+    telephone: data.telephone,
+    type_service: data.typeService, // Nous utilisons directement la valeur sans transformation
+    marque_vehicule: data.marque,
+    modele_vehicule: data.modele,
+    annee_vehicule: data.annee,
+    kilometrage: data.kilometrage,
+    description_services: data.description,
+  };
 };
