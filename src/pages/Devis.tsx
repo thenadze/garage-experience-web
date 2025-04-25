@@ -56,7 +56,7 @@ const Devis = () => {
     setIsSubmitting(true);
 
     try {
-      // 1. Save quote to Supabase with corrected field mapping
+      // 1. Save quote to Supabase with modified structure to match existing table schema
       const { error: quoteError } = await supabase
         .from('quotes')
         .insert({
@@ -66,10 +66,11 @@ const Devis = () => {
           phone: data.telephone,
           service: serviceTypes[data.typeService],
           vehicle_model: data.modele,
-          vehicle_brand: data.marque,
-          year: parseInt(data.annee),
-          mileage: parseInt(data.kilometrage),
-          message: data.description, // Changed from description to message to match DB schema
+          // Removing fields that don't exist in the database schema
+          // vehicle_brand: data.marque,
+          // year: parseInt(data.annee),
+          // mileage: parseInt(data.kilometrage),
+          message: `${data.marque} ${data.modele} (${data.annee}, ${data.kilometrage} km): ${data.description}`,
           status: 'pending'
         });
 
