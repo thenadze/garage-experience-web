@@ -16,7 +16,7 @@ export const getServicePlaceholder = (service: string) => {
 };
 
 // Configuration EmailJS corrigée
-export const SERVICE_ID = 'service_lwh15op'; 
+export const SERVICE_ID = 'service_jwh15op';
 export const TEMPLATE_ID = 'template_hck0ocv';
 export const PUBLIC_KEY = '0mST0Gd0Mt69-haxZ';
 
