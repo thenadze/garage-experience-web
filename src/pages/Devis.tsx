@@ -56,26 +56,29 @@ const Devis = () => {
     setIsSubmitting(true);
 
     try {
-      // 1. Save quote to Supabase
+      // 1. Save quote to Supabase with corrected field mapping
       const { error: quoteError } = await supabase
         .from('quotes')
         .insert({
           first_name: data.nom,
-          last_name: '', // Default empty string for now
+          last_name: '',
           email: data.email,
           phone: data.telephone,
           service: serviceTypes[data.typeService],
           vehicle_model: data.modele,
           vehicle_brand: data.marque,
-          year: data.annee,
-          mileage: data.kilometrage,
-          description: data.description,
+          year: parseInt(data.annee),
+          mileage: parseInt(data.kilometrage),
+          message: data.description, // Changed from description to message to match DB schema
           status: 'pending'
         });
 
-      if (quoteError) throw quoteError;
+      if (quoteError) {
+        console.error('Supabase error:', quoteError);
+        throw new Error('Erreur lors de la sauvegarde du devis');
+      }
 
-      // 2. Send email via EmailJS
+      // 2. Send email via EmailJS with the same data structure
       const templateParams = {
         nom_client: data.nom,
         email_client: data.email,
@@ -88,14 +91,18 @@ const Devis = () => {
         description_services: data.description,
       };
 
-      const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
+      const emailResponse = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
+      
+      if (!emailResponse.status || emailResponse.status !== 200) {
+        throw new Error('Erreur lors de l\'envoi de l\'email');
+      }
 
       // 3. Show success toast and redirect
       toast.success("Votre demande de devis a été envoyée avec succès ! Nous vous contacterons bientôt.");
       reset();
       navigate('/');
     } catch (error) {
-      console.error('Erreur lors de l\'envoi du devis', error);
+      console.error('Erreur lors de l\'envoi du devis:', error);
       toast.error("Échec de l'envoi du devis. Veuillez réessayer ou nous contacter directement.");
     } finally {
       setIsSubmitting(false);
