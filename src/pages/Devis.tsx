@@ -1,36 +1,19 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Loader2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import emailjs from '@emailjs/browser';
-import { toast } from "sonner";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ArrowRight, Loader2, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { PersonalInfoFields } from "@/components/devis/PersonalInfoFields";
 import { VehicleInfoFields } from "@/components/devis/VehicleInfoFields";
-import { devisFormSchema, serviceTypes, type DevisFormData } from "@/schemas/devisSchema";
-import { 
-  getServicePlaceholder, 
-  SERVICE_ID, 
-  TEMPLATE_ID, 
-  PUBLIC_KEY,
-  handleEmailjsResponse 
-} from "@/utils/devisUtils";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { ServiceTypeField } from "@/components/devis/ServiceTypeField";
+import { DescriptionField } from "@/components/devis/DescriptionField";
+import { devisFormSchema, type DevisFormData } from "@/schemas/devisSchema";
+import { useDevisForm } from "@/hooks/useDevisForm";
 
 const Devis = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [emailjsError, setEmailjsError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -40,7 +23,7 @@ const Devis = () => {
     if (type && (type === "reparation" || type === "entretien" || type === "tuning" || type === "vente")) {
       return type;
     }
-    return "vente"; // Default value
+    return "vente";
   };
 
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<DevisFormData>({
@@ -49,6 +32,8 @@ const Devis = () => {
       typeService: getInitialServiceType()
     }
   });
+
+  const { isSubmitting, emailjsError, handleSubmit: handleDevisSubmit } = useDevisForm();
 
   useEffect(() => {
     const type = searchParams.get("type");
@@ -61,106 +46,9 @@ const Devis = () => {
 
   const onSubmit = async (data: DevisFormData) => {
     if (!formRef.current) return;
-    setIsSubmitting(true);
-    setEmailjsError(null);
-
-    try {
-      console.log("Préparation de la soumission du devis...");
-      
-      // 1. Sauvegarde dans Supabase
-      const quoteData = {
-        first_name: data.nom,
-        last_name: '',
-        email: data.email,
-        phone: data.telephone,
-        service_id: null, 
-        vehicle_model: data.modele,
-        message: `${data.marque} ${data.modele} (${data.annee}, ${data.kilometrage} km): ${data.description}`,
-        status: 'pending'
-      };
-      
-      console.log("Données envoyées à Supabase:", quoteData);
-      
-      const { error: quoteError } = await supabase
-        .from('quotes')
-        .insert(quoteData);
-
-      if (quoteError) {
-        console.error('Erreur Supabase:', quoteError);
-        throw new Error(`Erreur lors de la sauvegarde du devis: ${quoteError.message}`);
-      }
-      
-      console.log("Données sauvegardées dans Supabase avec succès");
-
-      // 2. Envoi de l'email via EmailJS
-      const templateParams = {
-        nom_client: data.nom,
-        email_client: data.email,
-        telephone: data.telephone,
-        type_service: serviceTypes[data.typeService],
-        marque_vehicule: data.marque,
-        modele_vehicule: data.modele,
-        annee_vehicule: data.annee,
-        kilometrage: data.kilometrage,
-        description_services: data.description,
-      };
-      
-      console.log("Configuration EmailJS:", {
-        service_id: SERVICE_ID,
-        template_id: TEMPLATE_ID,
-        user_id: PUBLIC_KEY,
-        template_params: templateParams
-      });
-
-      try {
-        const emailResponse = await emailjs.send(
-          SERVICE_ID, 
-          TEMPLATE_ID, 
-          templateParams, 
-          PUBLIC_KEY
-        );
-        
-        console.log("Réponse EmailJS:", emailResponse);
-        
-        const { success, message } = handleEmailjsResponse(emailResponse);
-        
-        if (!success) {
-          setEmailjsError(message);
-          toast.error(message);
-        } else {
-          console.log("Email envoyé avec succès");
-          toast.success("Votre demande de devis a été envoyée avec succès ! Nous vous contacterons bientôt.");
-          
-          // Réinitialisation du formulaire et redirection
-          reset();
-          navigate('/');
-        }
-      } catch (emailError: any) {
-        console.error('Erreur EmailJS détaillée:', emailError);
-        
-        if (emailError.text && typeof emailError.text === 'string') {
-          setEmailjsError(emailError.text);
-        } else {
-          setEmailjsError("Erreur lors de l'envoi de l'email. Vérifiez vos identifiants EmailJS.");
-        }
-        
-        toast.error("Le devis a été enregistré mais l'email n'a pas pu être envoyé.");
-      }
-    } catch (error: any) {
-      console.error('Erreur lors de l\'envoi du devis:', error);
-      
-      // Message d'erreur détaillé
-      let errorMessage = "Échec de l'envoi du devis. ";
-      
-      if (error.message && error.message.includes("template")) {
-        errorMessage += "Problème avec le template d'email. ";
-      }
-      
-      errorMessage += "Veuillez réessayer ou nous contacter directement.";
-      
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
+    const success = await handleDevisSubmit(data);
+    if (success) {
+      reset();
     }
   };
 
@@ -176,6 +64,7 @@ const Devis = () => {
             <ArrowLeft className="mr-2" />
             Retour
           </Button>
+
           <h1 className="text-3xl md:text-4xl font-bold text-center mb-8">
             Demande de Devis
           </h1>
@@ -192,46 +81,18 @@ const Devis = () => {
           
           <div className="bg-white rounded-lg shadow-md p-8">
             <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="space-y-2">
-                <label htmlFor="typeService" className="block text-sm font-medium text-gray-700">
-                  Type de service
-                </label>
-                <Select 
-                  onValueChange={(value) => setValue("typeService", value as DevisFormData["typeService"])} 
-                  defaultValue={getInitialServiceType()}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionnez un type de service" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="reparation">Réparation</SelectItem>
-                    <SelectItem value="entretien">Entretien</SelectItem>
-                    <SelectItem value="tuning">Tuning</SelectItem>
-                    <SelectItem value="vente">Achat/Vente véhicule</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.typeService && (
-                  <p className="text-red-500 text-sm">{errors.typeService.message}</p>
-                )}
-              </div>
+              <ServiceTypeField
+                defaultValue={getInitialServiceType()}
+                onValueChange={(value) => setValue("typeService", value)}
+              />
 
               <PersonalInfoFields register={register} errors={errors} />
-              
               <VehicleInfoFields register={register} errors={errors} />
-
-              <div className="space-y-2">
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Description de votre demande
-                </label>
-                <Textarea
-                  id="description"
-                  placeholder={getServicePlaceholder(selectedService)}
-                  className={errors.description ? 'border-red-500' : ''}
-                  rows={5}
-                  {...register("description")}
-                />
-                {errors.description && <p className="text-red-500 text-sm">{errors.description.message}</p>}
-              </div>
+              <DescriptionField 
+                register={register}
+                errors={errors}
+                selectedService={selectedService}
+              />
 
               <Button 
                 type="submit" 
@@ -259,3 +120,4 @@ const Devis = () => {
 };
 
 export default Devis;
+
