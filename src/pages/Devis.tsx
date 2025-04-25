@@ -56,27 +56,34 @@ const Devis = () => {
     setIsSubmitting(true);
 
     try {
-      // 1. Save quote to Supabase with modified structure to match existing table schema
+      console.log("Préparation de la soumission du devis...");
+      
+      // 1. Sauvegarde dans Supabase
+      const quoteData = {
+        first_name: data.nom,
+        last_name: '',
+        email: data.email,
+        phone: data.telephone,
+        service_id: null, // Champ requis par le schéma mais nous n'avons pas l'ID
+        vehicle_model: data.modele,
+        message: `${data.marque} ${data.modele} (${data.annee}, ${data.kilometrage} km): ${data.description}`,
+        status: 'pending'
+      };
+      
+      console.log("Données envoyées à Supabase:", quoteData);
+      
       const { error: quoteError } = await supabase
         .from('quotes')
-        .insert({
-          first_name: data.nom,
-          last_name: '',
-          email: data.email,
-          phone: data.telephone,
-          // Using service_id instead of service which doesn't exist in the schema
-          service_id: null, // We don't have this ID, but the field exists in the schema
-          vehicle_model: data.modele,
-          message: `${data.marque} ${data.modele} (${data.annee}, ${data.kilometrage} km): ${data.description}`,
-          status: 'pending'
-        });
+        .insert(quoteData);
 
       if (quoteError) {
-        console.error('Supabase error:', quoteError);
-        throw new Error('Erreur lors de la sauvegarde du devis');
+        console.error('Erreur Supabase:', quoteError);
+        throw new Error(`Erreur lors de la sauvegarde du devis: ${quoteError.message}`);
       }
+      
+      console.log("Données sauvegardées dans Supabase avec succès");
 
-      // 2. Send email via EmailJS with the same data structure
+      // 2. Envoi de l'email via EmailJS
       const templateParams = {
         nom_client: data.nom,
         email_client: data.email,
@@ -88,20 +95,47 @@ const Devis = () => {
         kilometrage: data.kilometrage,
         description_services: data.description,
       };
-
-      const emailResponse = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
       
-      if (!emailResponse.status || emailResponse.status !== 200) {
-        throw new Error('Erreur lors de l\'envoi de l\'email');
+      console.log("Configuration EmailJS:", {
+        service_id: SERVICE_ID,
+        template_id: TEMPLATE_ID,
+        user_id: PUBLIC_KEY,
+        template_params: templateParams
+      });
+
+      const emailResponse = await emailjs.send(
+        SERVICE_ID, 
+        TEMPLATE_ID, 
+        templateParams, 
+        PUBLIC_KEY
+      );
+      
+      console.log("Réponse EmailJS:", emailResponse);
+      
+      if (emailResponse.status !== 200) {
+        console.warn('Email envoyé avec un statut non-200:', emailResponse.status);
+        toast.warning("Le devis a été enregistré mais l'email peut ne pas avoir été envoyé correctement.");
+      } else {
+        console.log("Email envoyé avec succès");
+        toast.success("Votre demande de devis a été envoyée avec succès ! Nous vous contacterons bientôt.");
       }
 
-      // 3. Show success toast and redirect
-      toast.success("Votre demande de devis a été envoyée avec succès ! Nous vous contacterons bientôt.");
+      // 3. Réinitialisation du formulaire et redirection
       reset();
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors de l\'envoi du devis:', error);
-      toast.error("Échec de l'envoi du devis. Veuillez réessayer ou nous contacter directement.");
+      
+      // Message d'erreur détaillé
+      let errorMessage = "Échec de l'envoi du devis. ";
+      
+      if (error.message && error.message.includes("template")) {
+        errorMessage += "Problème avec le template d'email. ";
+      }
+      
+      errorMessage += "Veuillez réessayer ou nous contacter directement.";
+      
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
