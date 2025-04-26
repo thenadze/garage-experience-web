@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Smile, Zap } from "lucide-react";
 
 interface Message {
   type: "user" | "bot";
@@ -23,6 +23,7 @@ const ChatBot = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const navigate = useNavigate();
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -35,6 +36,7 @@ const ChatBot = () => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    setIsTyping(true);
     processUserMessage(inputValue);
     setInputValue("");
   };
@@ -72,7 +74,11 @@ const ChatBot = () => {
       }, 1500);
     }
 
-    setMessages((prev) => [...prev, response]);
+    // Add delay to simulate typing
+    setTimeout(() => {
+      setMessages((prev) => [...prev, response]);
+      setIsTyping(false);
+    }, 1000);
   };
 
   return (
@@ -80,14 +86,17 @@ const ChatBot = () => {
       <DialogTrigger asChild>
         <Button 
           size="icon"
-          className="fixed bottom-4 right-4 rounded-full h-12 w-12 bg-garage-red hover:bg-garage-red/90"
+          className="fixed bottom-4 right-4 rounded-full h-12 w-12 bg-garage-red hover:bg-garage-red/90 hover:scale-110 transition-all duration-300 animate-bounce"
         >
           <MessageSquare className="h-6 w-6" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Assistant Garage Auto</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Smile className="h-5 w-5 text-garage-red animate-pulse" />
+            Assistant Garage Auto
+          </DialogTitle>
           <DialogDescription>
             Comment puis-je vous aider aujourd'hui ?
           </DialogDescription>
@@ -103,16 +112,24 @@ const ChatBot = () => {
                   }`}
                 >
                   <div
-                    className={`rounded-lg px-4 py-2 max-w-[80%] ${
+                    className={`rounded-lg px-4 py-2 max-w-[80%] animate-fade-in ${
                       message.type === "user"
-                        ? "bg-garage-red text-white"
-                        : "bg-gray-100"
+                        ? "bg-garage-red text-white slide-in-from-right"
+                        : "bg-gray-100 slide-in-from-left"
                     }`}
                   >
                     {message.content}
                   </div>
                 </div>
               ))}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="flex items-center space-x-2 rounded-lg px-4 py-2 bg-gray-100 animate-pulse">
+                    <Zap className="h-4 w-4" />
+                    <span>En train d'écrire...</span>
+                  </div>
+                </div>
+              )}
             </div>
           </ScrollArea>
           <form onSubmit={handleSendMessage} className="flex space-x-2">
@@ -120,9 +137,14 @@ const ChatBot = () => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Tapez votre message ici..."
-              className="flex-1"
+              className="flex-1 focus:ring-2 focus:ring-garage-red transition-all duration-300"
             />
-            <Button type="submit">Envoyer</Button>
+            <Button 
+              type="submit" 
+              className="bg-garage-red hover:bg-garage-red/90 transition-all duration-300 hover:scale-105"
+            >
+              Envoyer
+            </Button>
           </form>
         </div>
       </DialogContent>
