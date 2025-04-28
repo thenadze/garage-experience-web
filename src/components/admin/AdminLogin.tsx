@@ -7,8 +7,10 @@ import { Car } from "lucide-react";
 
 // Ces identifiants devraient idéalement être conservés de manière plus sécurisée,
 // comme dans une base de données ou via l'authentification Supabase
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "garage2025";
+const ADMIN_CREDENTIALS = [
+  { username: "admin", password: "garage2025" },
+  { username: "nadze123", password: "1234" }
+];
 
 interface AdminLoginProps {
   onSuccess: () => void;
@@ -30,7 +32,11 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
     }
     
     // Vérification des identifiants
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    const validUser = ADMIN_CREDENTIALS.find(
+      cred => cred.username === username && cred.password === password
+    );
+    
+    if (validUser) {
       localStorage.setItem("adminAuthenticated", "true");
       toast({
         title: "Connexion réussie",
