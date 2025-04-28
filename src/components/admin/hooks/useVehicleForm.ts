@@ -4,6 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { VehicleFormValues } from "../schemas/vehicleFormSchema";
+import { getRLSInstructions } from "@/integrations/supabase/setup";
 
 type Vehicle = Tables<"vehicles">;
 
@@ -31,6 +32,10 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
         .upload(filePath, imageFile);
 
       if (uploadError) {
+        console.error("Erreur d'upload:", uploadError);
+        if (uploadError.message.includes('bucket') || uploadError.statusCode === 404) {
+          throw new Error("Le bucket de stockage 'vehicles' n'existe pas. Veuillez consulter les instructions pour le créer.");
+        }
         throw uploadError;
       }
 
@@ -54,7 +59,7 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
       const now = new Date().toISOString();
 
       if (vehicle) {
-        // Update existing vehicle - make sure all required fields are included
+        // Update existing vehicle
         const { error } = await supabase
           .from("vehicles")
           .update({
@@ -71,9 +76,20 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
           })
           .eq("id", vehicle.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Erreur de mise à jour:", error);
+          if (error.message.includes('policy') || error.code === 'PGRST301') {
+            const rlsInfo = getRLSInstructions();
+            toast({
+              variant: "destructive",
+              title: rlsInfo.title,
+              description: "Vous n'avez pas l'autorisation de modifier les véhicules. Vérifiez les paramètres RLS dans votre console Supabase."
+            });
+          }
+          throw error;
+        }
       } else {
-        // Add new vehicle - make sure all required fields are included
+        // Add new vehicle
         const { error } = await supabase
           .from("vehicles")
           .insert({
@@ -90,7 +106,18 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
             updated_at: now,
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error("Erreur d'ajout:", error);
+          if (error.message.includes('policy') || error.code === 'PGRST301') {
+            const rlsInfo = getRLSInstructions();
+            toast({
+              variant: "destructive",
+              title: rlsInfo.title,
+              description: "Vous n'avez pas l'autorisation d'ajouter des véhicules. Vérifiez les paramètres RLS dans votre console Supabase."
+            });
+          }
+          throw error;
+        }
       }
 
       toast({

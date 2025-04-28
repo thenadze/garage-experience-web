@@ -9,11 +9,13 @@ import VehicleForm from "@/components/admin/VehicleForm";
 import { Car, Eye, LogOut, Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { setupSupabaseResources, getRLSInstructions } from "@/integrations/supabase/setup";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("list");
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
+  const [setupComplete, setSetupComplete] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -25,6 +27,27 @@ const Admin = () => {
       setIsAuthenticated(true);
     }
   }, []);
+
+  // Setup Supabase resources when admin is authenticated
+  useEffect(() => {
+    if (isAuthenticated && !setupComplete) {
+      const initializeResources = async () => {
+        const result = await setupSupabaseResources();
+        if (!result.success) {
+          const rlsInfo = getRLSInstructions();
+          toast({
+            variant: "destructive",
+            title: rlsInfo.title,
+            description: "Des problèmes de configuration empêchent l'ajout de véhicules. Vérifiez la console pour plus d'informations."
+          });
+        } else {
+          setSetupComplete(true);
+        }
+      };
+      
+      initializeResources();
+    }
+  }, [isAuthenticated, toast, setupComplete]);
 
   const handleLogout = () => {
     localStorage.removeItem("adminAuthenticated");
