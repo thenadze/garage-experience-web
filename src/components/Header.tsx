@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Menu } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -34,7 +35,7 @@ const Header = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden md:flex space-x-8 items-center">
             {['accueil', 'services', 'vehicules', 'contact'].map((item, index) => (
               <a 
                 key={item}
@@ -48,16 +49,28 @@ const Header = () => {
                 <span className="absolute bottom-0 left-0 w-full h-0.5 bg-garage-red transform scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100"></span>
               </a>
             ))}
+            <Link to="/admin">
+              <Button variant="ghost" size="icon" className="ml-2" aria-label="Administration">
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
           </nav>
 
           {/* Mobile Menu Button */}
-          <button 
-            className="md:hidden flex items-center active:scale-95 transition-transform duration-150" 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle mobile menu"
-          >
-            <Menu className={`h-6 w-6 transition-all duration-300 ${mobileMenuOpen ? 'rotate-90' : ''}`} />
-          </button>
+          <div className="md:hidden flex items-center space-x-2">
+            <Link to="/admin">
+              <Button variant="ghost" size="icon" className="mr-2" aria-label="Administration">
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
+            <button 
+              className="flex items-center active:scale-95 transition-transform duration-150" 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle mobile menu"
+            >
+              <Menu className={`h-6 w-6 transition-all duration-300 ${mobileMenuOpen ? 'rotate-90' : ''}`} />
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
