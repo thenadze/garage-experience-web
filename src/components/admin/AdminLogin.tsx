@@ -31,12 +31,16 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
       return;
     }
     
+    console.log("Tentative de connexion avec:", username, password);
+    console.log("Credentials disponibles:", ADMIN_CREDENTIALS);
+    
     // Vérification des identifiants
     const validUser = ADMIN_CREDENTIALS.find(
       cred => cred.username === username && cred.password === password
     );
     
     if (validUser) {
+      console.log("Authentification réussie");
       localStorage.setItem("adminAuthenticated", "true");
       toast({
         title: "Connexion réussie",
@@ -44,6 +48,7 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
       });
       onSuccess();
     } else {
+      console.log("Authentification échouée");
       setError("Identifiants incorrects");
       toast({
         variant: "destructive",

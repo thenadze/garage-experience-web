@@ -20,6 +20,7 @@ const Admin = () => {
   // Check for stored authentication
   useEffect(() => {
     const authStatus = localStorage.getItem("adminAuthenticated");
+    console.log("État d'authentification trouvé:", authStatus);
     if (authStatus === "true") {
       setIsAuthenticated(true);
     }
@@ -60,9 +61,11 @@ const Admin = () => {
   };
 
   if (!isAuthenticated) {
+    console.log("Affichage du formulaire de connexion admin");
     return <AdminLogin onSuccess={() => setIsAuthenticated(true)} />;
   }
 
+  console.log("Affichage de l'interface d'administration");
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-garage-black text-white py-4 px-6 flex justify-between items-center">
