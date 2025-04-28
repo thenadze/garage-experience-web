@@ -108,7 +108,7 @@ const VehicleForm = ({ vehicle, onSuccess }: VehicleFormProps) => {
     }
   };
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (formData: FormValues) => {
     setLoading(true);
     
     try {
@@ -119,27 +119,43 @@ const VehicleForm = ({ vehicle, onSuccess }: VehicleFormProps) => {
         finalImageUrl = await uploadImage();
       }
 
+      const now = new Date().toISOString();
+
       if (vehicle) {
-        // Update existing vehicle
+        // Update existing vehicle - make sure all required fields are included
         const { error } = await supabase
           .from("vehicles")
           .update({
-            ...data,
+            brand: formData.brand,
+            model: formData.model,
+            year: formData.year,
+            price: formData.price,
+            mileage: formData.mileage,
+            fuel_type: formData.fuel_type,
+            description: formData.description,
+            is_sold: formData.is_sold,
             image_url: finalImageUrl,
-            updated_at: new Date().toISOString(),
+            updated_at: now,
           })
           .eq("id", vehicle.id);
 
         if (error) throw error;
       } else {
-        // Add new vehicle
+        // Add new vehicle - make sure all required fields are included
         const { error } = await supabase
           .from("vehicles")
           .insert({
-            ...data,
+            brand: formData.brand,
+            model: formData.model,
+            year: formData.year,
+            price: formData.price,
+            mileage: formData.mileage,
+            fuel_type: formData.fuel_type,
+            description: formData.description,
+            is_sold: formData.is_sold,
             image_url: finalImageUrl,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            created_at: now,
+            updated_at: now,
           });
 
         if (error) throw error;
