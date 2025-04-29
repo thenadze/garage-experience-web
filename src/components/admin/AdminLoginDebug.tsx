@@ -15,8 +15,8 @@ const AdminLoginDebug = ({
 }: AdminLoginDebugProps) => {
   if (!debugInfo) return null;
   
-  const isRLSError = debugInfo.__isAuthError && debugInfo.code === "invalid_credentials";
-  const isProfileRLSError = debugInfo.__isRLSError && debugInfo.code === "rls_profile_creation";
+  const isRLSError = debugInfo.isAuthError && debugInfo.code === "invalid_credentials";
+  const isProfileRLSError = debugInfo.isRLSError && debugInfo.code === "rls_profile_creation";
   
   return (
     <div className="mt-4">

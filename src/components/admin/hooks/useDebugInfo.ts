@@ -11,7 +11,7 @@ export function useDebugInfo() {
 
   const updateDebugInfo = (info: any) => {
     // Process authentication errors to provide more helpful messages
-    if (info && info.__isAuthError && info.code === "invalid_credentials") {
+    if (info && info.isAuthError && info.code === "invalid_credentials") {
       const enhancedInfo = {
         ...info,
         possibleCauses: [
@@ -28,7 +28,7 @@ export function useDebugInfo() {
       setDebugInfo(enhancedInfo);
     } 
     // Gérer spécifiquement l'erreur de création de profil RLS
-    else if (info && info.__isRLSError && info.code === "rls_profile_creation") {
+    else if (info && info.isRLSError && info.code === "rls_profile_creation") {
       const enhancedInfo = {
         ...info,
         possibleCauses: [

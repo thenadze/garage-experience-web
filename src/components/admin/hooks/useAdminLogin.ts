@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthError } from "@supabase/supabase-js";
 
 export function useAdminLogin(onSuccess: () => void) {
   const [email, setEmail] = useState("");
@@ -50,21 +51,16 @@ export function useAdminLogin(onSuccess: () => void) {
         console.error("Erreur Supabase:", signInError);
         
         // Détecter si c'est probablement une erreur RLS
-        const isRLSProblem = signInError.__isAuthError && 
-                             signInError.code === "invalid_credentials";
+        // Utiliser le code d'erreur plutôt que la propriété protégée
+        const isRLSProblem = signInError instanceof AuthError && 
+                            signInError.code === "invalid_credentials";
         
         if (isRLSProblem) {
           console.log("Erreur d'authentification potentiellement liée au RLS, tentative de diagnostic...");
           
-          // Test si l'utilisateur existe réellement
-          const { data: userData, error: userError } = await supabase.auth
-            .admin
-            .getUserByEmail(email)
-            .catch(() => ({ data: null, error: { message: "Non autorisé" } }));
-          
-          if (userData) {
-            console.log("L'utilisateur existe dans Supabase Auth, probable problème de RLS");
-          }
+          // Utilisez une méthode disponible comme getUser ou getUserById si nécessaire
+          // Mais pour simplifier, supprimons cette partie qui n'est pas essentielle
+          console.log("Vérification des informations utilisateur impossible via l'API admin - droits insuffisants");
         }
         
         throw signInError;
@@ -125,8 +121,8 @@ export function useAdminLogin(onSuccess: () => void) {
               success: true, 
               debugInfo: {
                 ...data,
-                __isAuthError: false,
-                __isRLSError: true,
+                isAuthError: false,
+                isRLSError: true,
                 code: "rls_profile_creation",
                 message: "Connexion réussie mais erreur RLS sur création de profil",
                 originalError: createProfileError
@@ -164,7 +160,8 @@ export function useAdminLogin(onSuccess: () => void) {
           errorMessage = "Email ou mot de passe incorrect. Vérifiez vos identifiants Supabase.";
           
           // Ajouter des informations supplémentaires liées au RLS
-          err.__isRLSProblem = true;
+          // Utiliser des propriétés publiques pour stocker les informations
+          err.isRLSProblem = true;
           err.rls_detail = "Cette erreur peut être causée par des politiques RLS bloquant l'authentification";
         } else {
           errorMessage = err.message;
@@ -178,7 +175,14 @@ export function useAdminLogin(onSuccess: () => void) {
         description: `${errorMessage} (Code: ${err.code || 'inconnu'})`,
       });
       
-      return { success: false, debugInfo: err };
+      return { 
+        success: false, 
+        debugInfo: {
+          ...err,
+          isAuthError: err instanceof AuthError,
+          code: err.code || "unknown_error"
+        }
+      };
     } finally {
       setLoading(false);
     }
