@@ -44,7 +44,7 @@ export async function fetchVehicleImages(vehicleId: string | number) {
   // Utilisation de la méthode rpc pour appeler la fonction
   const { data, error } = await supabase.rpc('get_vehicle_images', {
     v_id: formattedId
-  });
+  } as any); // Utilisation de "as any" pour contourner l'erreur de typage
   
   return { data, error };
 }
@@ -54,7 +54,7 @@ export async function addVehicleImages(images: VehicleImage[]) {
   // Utilisation de la méthode rpc pour appeler la fonction
   const { data, error } = await supabase.rpc('add_vehicle_images', {
     images_data: JSON.stringify(images)
-  });
+  } as any); // Utilisation de "as any" pour contourner l'erreur de typage
   
   return { data, error };
 }
