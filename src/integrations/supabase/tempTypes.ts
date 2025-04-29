@@ -44,7 +44,7 @@ export async function fetchVehicleImages(vehicleId: string | number) {
   // Utilisation de la méthode rpc pour contourner la limitation des types
   const { data, error } = await supabase.rpc('get_vehicle_images', {
     v_id: formattedId
-  });
+  } as any);
   
   return { data, error };
 }
@@ -54,7 +54,7 @@ export async function addVehicleImages(images: VehicleImage[]) {
   // Utilisation de la méthode rpc pour contourner la limitation des types
   const { data, error } = await supabase.rpc('add_vehicle_images', {
     images_data: JSON.stringify(images)
-  });
+  } as any);
   
   return { data, error };
 }
