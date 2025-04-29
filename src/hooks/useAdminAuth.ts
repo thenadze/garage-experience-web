@@ -1,36 +1,70 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from '@/components/ui/use-toast';
 
 export function useAdminAuth() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
+        console.log("Vérification du statut admin...");
+        
         // Vérifier si l'utilisateur est authentifié
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
+          console.log("Aucune session trouvée");
           setIsAdmin(false);
           setLoading(false);
           return;
         }
+        
+        console.log("Session trouvée pour:", session.user.email);
 
         // Vérifier si l'utilisateur a le rôle admin en utilisant la table profiles
-        // Nous utilisons une requête SQL brute pour éviter les problèmes de typage
         const { data: adminData, error: adminError } = await supabase
           .from('profiles')
-          .select('id')
+          .select('*')
           .eq('id', session.user.id)
           .single();
           
-        if (adminError || !adminData) {
-          setIsAdmin(false);
+        if (adminError) {
+          console.error("Erreur lors de la vérification du profil:", adminError);
+          
+          // Vérifier si l'erreur est due à l'absence de l'enregistrement
+          if (adminError.code === 'PGRST116') {
+            console.log("Profil non trouvé - tentative de création");
+            
+            // Tenter de créer un profil pour cet utilisateur
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: session.user.id,
+                email: session.user.email,
+                updated_at: new Date().toISOString()
+              });
+            
+            if (insertError) {
+              console.error("Erreur de création du profil:", insertError);
+              toast({
+                variant: "destructive",
+                title: "Erreur de profil",
+                description: "Impossible de créer votre profil administrateur. Vérifiez les droits RLS dans Supabase.",
+              });
+              setIsAdmin(false);
+            } else {
+              console.log("Profil admin créé avec succès");
+              setIsAdmin(true);
+            }
+          } else {
+            setIsAdmin(false);
+          }
         } else {
-          // Dans un environnement de production, vous devriez vérifier un champ spécifique
-          // comme 'is_admin' dans la table profiles au lieu de simplement vérifier l'existence
+          console.log("Profil admin trouvé:", adminData);
           setIsAdmin(true);
         }
       } catch (error) {
@@ -52,7 +86,7 @@ export function useAdminAuth() {
     return () => {
       authListener?.subscription.unsubscribe();
     };
-  }, []);
+  }, [toast]);
 
   const logout = async () => {
     try {

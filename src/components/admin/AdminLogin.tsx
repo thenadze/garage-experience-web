@@ -28,6 +28,7 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
     
     try {
       setLoading(true);
+      console.log("Tentative de connexion avec:", email);
       
       // Authentification avec Supabase
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
@@ -35,10 +36,31 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
         password
       });
       
-      if (signInError) throw signInError;
+      if (signInError) {
+        console.error("Erreur Supabase:", signInError);
+        throw signInError;
+      }
       
-      // Pour la démonstration, nous considérons que tous les utilisateurs authentifiés sont des administrateurs
-      // Dans un environnement de production, vous devriez vérifier un champ is_admin dans votre table profiles
+      console.log("Connexion réussie:", data);
+      
+      // Vérifier si l'utilisateur a un profil admin
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+      
+      if (profileError) {
+        console.error("Erreur de récupération du profil:", profileError);
+        toast({
+          variant: "destructive",
+          title: "Profil non trouvé",
+          description: "Votre compte existe mais aucun profil admin n'est associé. Contactez l'administrateur système.",
+        });
+        // On continue quand même pour faciliter le débogage
+      } else {
+        console.log("Profil trouvé:", profileData);
+      }
       
       toast({
         title: "Connexion réussie",
@@ -48,11 +70,61 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
       onSuccess();
     } catch (err: any) {
       console.error("Erreur de connexion:", err);
-      setError(err.message || "Identifiants incorrects");
+      
+      // Message d'erreur plus détaillé
+      let errorMessage = "Identifiants incorrects";
+      
+      if (err.message) {
+        if (err.message.includes("Invalid login credentials")) {
+          errorMessage = "Email ou mot de passe incorrect. Vérifiez vos identifiants Supabase.";
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: "Erreur de connexion",
-        description: err.message || "Nom d'utilisateur ou mot de passe incorrect.",
+        description: `${errorMessage} (Code: ${err.code || 'inconnu'})`,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDebugSignUp = async () => {
+    if (!email || !password) {
+      setError("Remplissez les champs email et mot de passe pour créer un compte de débogage");
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            is_admin: true
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      console.log("Création du compte:", data);
+      
+      toast({
+        title: "Compte créé",
+        description: "Un compte a été créé. Vérifiez votre email pour confirmer. Si cela ne fonctionne pas, configurez l'authentification dans la console Supabase.",
+      });
+    } catch (err: any) {
+      console.error("Erreur création compte:", err);
+      toast({
+        variant: "destructive",
+        title: "Erreur de création de compte",
+        description: err.message || "Erreur inconnue",
       });
     } finally {
       setLoading(false);
@@ -121,6 +193,20 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
               "Connexion"
             )}
           </Button>
+          
+          <div className="text-center mt-4 pt-4 border-t">
+            <p className="text-sm text-gray-600 mb-2">Problèmes de connexion?</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={handleDebugSignUp}
+              disabled={loading}
+            >
+              Créer un compte administrateur
+            </Button>
+          </div>
         </form>
       </div>
     </div>
