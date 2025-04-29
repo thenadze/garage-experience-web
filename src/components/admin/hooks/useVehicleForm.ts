@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { VehicleFormValues } from "../schemas/vehicleFormSchema";
 import { getRLSInstructions } from "@/integrations/supabase/setup";
+import { isVehicleImageArray } from "@/integrations/supabase/tempTypes";
 
 type Vehicle = Tables<"vehicles">;
 
@@ -112,20 +113,27 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
 
         // Si nous avons des images supplémentaires, les ajouter à la table vehicle_images
         if (imageUrls.length > 1) {
-          // Insérer uniquement les images supplémentaires (à partir de l'index 1)
-          const additionalImages = imageUrls.slice(1).map(url => ({
-            vehicle_id: vehicle.id,
-            image_url: url,
-            created_at: now,
-          }));
-          
-          const { error: imagesError } = await supabase
-            .from("vehicle_images")
-            .insert(additionalImages);
+          try {
+            // Insérer uniquement les images supplémentaires (à partir de l'index 1)
+            const additionalImages = imageUrls.slice(1).map(url => ({
+              vehicle_id: vehicle.id,
+              image_url: url,
+              created_at: now,
+            }));
             
-          if (imagesError) {
-            console.error("Erreur lors de l'ajout des images supplémentaires:", imagesError);
-            // On ne bloque pas le processus si l'ajout des images supplémentaires échoue
+            // Notez que cette opération ne fonctionnera que lorsque vous aurez créé la table dans Supabase
+            // Pour le moment, on capture simplement l'erreur sans bloquer l'exécution
+            const { error: imagesError } = await supabase
+              .from("vehicle_images")
+              .insert(additionalImages as any); // Utilisation du type 'any' temporairement
+              
+            if (imagesError) {
+              console.error("Erreur lors de l'ajout des images supplémentaires:", imagesError);
+              // On ne bloque pas le processus si l'ajout des images supplémentaires échoue
+            }
+          } catch (error) {
+            console.error("Erreur lors de l'insertion des images supplémentaires:", error);
+            // Ne pas bloquer le processus principal
           }
         }
       } else {
@@ -162,20 +170,27 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
 
         // Si nous avons des images supplémentaires et que le véhicule a été créé avec succès
         if (imageUrls.length > 1 && newVehicle && newVehicle.length > 0) {
-          // Insérer uniquement les images supplémentaires (à partir de l'index 1)
-          const additionalImages = imageUrls.slice(1).map(url => ({
-            vehicle_id: newVehicle[0].id,
-            image_url: url,
-            created_at: now,
-          }));
-          
-          const { error: imagesError } = await supabase
-            .from("vehicle_images")
-            .insert(additionalImages);
+          try {
+            // Insérer uniquement les images supplémentaires (à partir de l'index 1)
+            const additionalImages = imageUrls.slice(1).map(url => ({
+              vehicle_id: newVehicle[0].id,
+              image_url: url,
+              created_at: now,
+            }));
             
-          if (imagesError) {
-            console.error("Erreur lors de l'ajout des images supplémentaires:", imagesError);
-            // On ne bloque pas le processus si l'ajout des images supplémentaires échoue
+            // Notez que cette opération ne fonctionnera que lorsque vous aurez créé la table dans Supabase
+            // Pour le moment, on capture simplement l'erreur sans bloquer l'exécution
+            const { error: imagesError } = await supabase
+              .from("vehicle_images")
+              .insert(additionalImages as any); // Utilisation du type 'any' temporairement
+              
+            if (imagesError) {
+              console.error("Erreur lors de l'ajout des images supplémentaires:", imagesError);
+              // On ne bloque pas le processus si l'ajout des images supplémentaires échoue
+            }
+          } catch (error) {
+            console.error("Erreur lors de l'insertion des images supplémentaires:", error);
+            // Ne pas bloquer le processus principal
           }
         }
       }

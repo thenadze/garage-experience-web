@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/carousel";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { isVehicleImageArray } from '@/integrations/supabase/tempTypes';
 
 interface CarCardProps {
   image: string;
@@ -37,19 +38,28 @@ const CarCard = ({ image, model, year, price, kilometers, fuel, vehicleId }: Car
   useEffect(() => {
     if (vehicleId) {
       const fetchAdditionalImages = async () => {
-        const { data, error } = await supabase
-          .from('vehicle_images')
-          .select('image_url')
-          .eq('vehicle_id', vehicleId);
-          
-        if (!error && data && data.length > 0) {
-          const additionalUrls = data.map(item => item.image_url).filter(Boolean);
-          setImages(prev => {
-            // Fusionner l'image principale avec les images supplémentaires
-            // et éliminer les doublons potentiels
-            const allImages = [image, ...additionalUrls];
-            return [...new Set(allImages)].filter(Boolean);
-          });
+        try {
+          // Notez que ceci fonctionnera uniquement après que vous ayez créé la table vehicle_images dans Supabase
+          const { data, error } = await supabase
+            .from('vehicle_images')
+            .select('*')
+            .eq('vehicle_id', vehicleId);
+            
+          if (!error && data && isVehicleImageArray(data)) {
+            const additionalUrls = data.map(item => item.image_url).filter(Boolean);
+            setImages(prev => {
+              // Fusionner l'image principale avec les images supplémentaires
+              // et éliminer les doublons potentiels
+              const allImages = [image, ...additionalUrls];
+              return [...new Set(allImages)].filter(Boolean);
+            });
+          }
+        } catch (error) {
+          console.error("Erreur lors de la récupération des images:", error);
+          // En cas d'erreur, utiliser au moins l'image principale
+          if (image) {
+            setImages([image]);
+          }
         }
       };
       
