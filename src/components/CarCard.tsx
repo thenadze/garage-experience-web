@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import {
   Carousel,
@@ -7,8 +8,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { extractImageUrls, formatVehicleId } from '@/integrations/supabase/tempTypes';
+import { extractImageUrls, formatVehicleId, fetchVehicleImages } from '@/integrations/supabase/tempTypes';
 
 interface CarCardProps {
   image: string;
@@ -38,16 +38,12 @@ const CarCard = ({ image, model, year, price, kilometers, fuel, vehicleId }: Car
     if (vehicleId) {
       const fetchAdditionalImages = async () => {
         try {
-          // Convertir l'ID du véhicule en integer pour correspondre au type de la colonne
-          const formattedVehicleId = formatVehicleId(vehicleId);
-          
-          const { data, error } = await supabase
-            .from('vehicle_images')
-            .select('*')
-            .eq('vehicle_id', formattedVehicleId);
+          // Utiliser la fonction utilitaire pour récupérer les images
+          const { data, error } = await fetchVehicleImages(vehicleId);
               
           if (error) {
             console.error("Erreur lors de la récupération des images:", error);
+            console.log("Vérifiez que vous avez créé la fonction RPC 'get_vehicle_images'");
             return;
           }
           

@@ -1,6 +1,5 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { formatVehicleId } from "@/integrations/supabase/tempTypes";
+import { formatVehicleId, addVehicleImages } from "@/integrations/supabase/tempTypes";
 
 export function useVehicleAdditionalImages() {
   const tryAddAdditionalImages = async (vehicleId: string | number, imageUrls: string[]) => {
@@ -20,11 +19,9 @@ export function useVehicleAdditionalImages() {
       
       if (additionalImages.length === 0) return;
       
-      // Essayer d'insérer dans la table vehicle_images
+      // Utiliser la fonction utilitaire pour ajouter les images
       try {
-        const { error } = await supabase
-          .from('vehicle_images')
-          .insert(additionalImages);
+        const { error } = await addVehicleImages(additionalImages);
           
         if (error) {
           console.error("Erreur lors de l'ajout des images supplémentaires:", error);
@@ -32,6 +29,7 @@ export function useVehicleAdditionalImages() {
       } catch (insertError) {
         console.error("Erreur lors de l'insertion des images supplémentaires:", insertError);
         // La table pourrait ne pas exister encore
+        console.log("Vérifiez que vous avez créé la table vehicle_images et que vous avez ajouté une fonction RPC 'add_vehicle_images'");
       }
     } catch (error) {
       console.error("Erreur lors de la préparation des images supplémentaires:", error);
