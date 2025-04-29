@@ -37,22 +37,19 @@ export function formatVehicleId(vehicleId: string | number): string {
   return typeof vehicleId === 'number' ? vehicleId.toString() : vehicleId;
 }
 
-// Définition des types pour les fonctions RPC
-export type GetVehicleImagesParams = {
-  v_id: string;
-}
-
-export type AddVehicleImagesParams = {
-  images_data: string;
+// Interface pour les fonctions RPC
+export interface RPCFunctions {
+  get_vehicle_images: (params: { v_id: string }) => VehicleImage[];
+  add_vehicle_images: (params: { images_data: string }) => unknown;
 }
 
 // Fonctions utilitaires pour interagir avec la table vehicle_images
 export async function fetchVehicleImages(vehicleId: string | number) {
   const formattedId = formatVehicleId(vehicleId);
   
-  // Utilisation typée correcte avec any pour contourner temporairement les restrictions
+  // Utilisation de la méthode appropriée pour RPC avec typage
   const { data, error } = await supabase
-    .rpc('get_vehicle_images', { v_id: formattedId } as any)
+    .rpc('get_vehicle_images', { v_id: formattedId })
     .returns<VehicleImage[]>();
   
   return { data, error };
@@ -60,9 +57,9 @@ export async function fetchVehicleImages(vehicleId: string | number) {
 
 // Fonction pour ajouter des images de véhicule
 export async function addVehicleImages(images: VehicleImage[]) {
-  // Utilisation typée correcte avec any pour contourner temporairement les restrictions
+  // Utilisation de la méthode appropriée pour RPC avec typage
   const { data, error } = await supabase
-    .rpc('add_vehicle_images', { images_data: JSON.stringify(images) } as any);
+    .rpc('add_vehicle_images', { images_data: JSON.stringify(images) });
   
   return { data, error };
 }
