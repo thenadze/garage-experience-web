@@ -1,10 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { Car } from "lucide-react";
+import { Car, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AdminLoginProps {
   onSuccess: () => void;
@@ -15,11 +16,31 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
   const { toast } = useToast();
+
+  // Vérifier s'il existe déjà une session active
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log("Session existante trouvée:", session.user.email);
+        toast({
+          title: "Session existante",
+          description: `Une session est déjà active pour ${session.user.email}`,
+        });
+        onSuccess();
+      }
+    };
+    
+    checkExistingSession();
+  }, [onSuccess, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setDebugInfo(null);
     
     if (!email.trim() || !password.trim()) {
       setError("Veuillez remplir tous les champs");
@@ -38,6 +59,13 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
       
       if (signInError) {
         console.error("Erreur Supabase:", signInError);
+        // Sauvegarder l'erreur pour débogage
+        setDebugInfo({
+          error: signInError,
+          type: "signIn",
+          message: signInError.message,
+          email: email
+        });
         throw signInError;
       }
       
@@ -52,6 +80,12 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
       
       if (profileError) {
         console.log("Profil non trouvé, tentative de création");
+        setDebugInfo({
+          error: profileError,
+          type: "profile",
+          userId: data.user.id
+        });
+        
         // Créer un profil avec les champs corrects
         const { error: createProfileError } = await supabase
           .from('profiles')
@@ -64,6 +98,11 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
         
         if (createProfileError) {
           console.error("Erreur de création du profil:", createProfileError);
+          setDebugInfo(prev => ({
+            ...prev,
+            createProfileError: createProfileError
+          }));
+          
           toast({
             variant: "destructive",
             title: "Erreur de profil",
@@ -109,12 +148,27 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
 
   const handleDebugSignUp = async () => {
     if (!email || !password) {
-      setError("Remplissez les champs email et mot de passe pour créer un compte de débogage");
+      setError("Remplissez les champs email et mot de passe pour créer un compte");
       return;
     }
     
     try {
       setLoading(true);
+      setDebugInfo(null);
+      
+      // Vérifier d'abord si l'email existe déjà
+      const { data: existingUsers, error: checkError } = await supabase.auth.admin.listUsers({
+        page: 1,
+        perPage: 1,
+        filter: {
+          email: email
+        }
+      }).catch(() => ({ data: null, error: null }));
+      
+      // Si l'API admin n'est pas disponible, on continue avec la création du compte
+      console.log("Vérification de l'utilisateur existant:", existingUsers);
+      
+      // Créer le compte avec Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -125,12 +179,25 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        setDebugInfo({
+          error: error,
+          type: "signUp",
+          message: error.message
+        });
+        throw error;
+      }
       
       console.log("Création du compte:", data);
+      setDebugInfo({
+        success: true,
+        user: data.user,
+        type: "signUp"
+      });
       
-      // Si l'inscription réussit, créer un profil pour l'utilisateur
+      // Si l'inscription réussit, tenter de se connecter immédiatement
       if (data.user) {
+        // Créer un profil pour l'utilisateur
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
@@ -142,21 +209,57 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
           
         if (profileError) {
           console.error("Erreur de création du profil:", profileError);
+          setDebugInfo(prev => ({
+            ...prev,
+            profileError: profileError
+          }));
         } else {
           console.log("Profil créé avec succès");
+          
+          // Tenter une connexion immédiate si possible
+          if (!data.session) {
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+              email,
+              password
+            });
+            
+            if (!signInError) {
+              toast({
+                title: "Connexion automatique réussie",
+                description: "Vous êtes maintenant connecté à l'interface d'administration.",
+              });
+              onSuccess();
+              return;
+            }
+          } else if (data.session) {
+            // Si une session a été créée directement
+            toast({
+              title: "Compte créé et connecté",
+              description: "Vous êtes maintenant connecté à l'interface d'administration.",
+            });
+            onSuccess();
+            return;
+          }
         }
       }
       
       toast({
         title: "Compte créé",
-        description: "Un compte a été créé. Vérifiez votre email pour confirmer. Si cela ne fonctionne pas, configurez l'authentification dans la console Supabase.",
+        description: "Un compte a été créé. Vous pouvez maintenant vous connecter avec ces identifiants.",
       });
     } catch (err: any) {
       console.error("Erreur création compte:", err);
+      let errorMsg = err.message || "Erreur inconnue";
+      
+      // Messages d'erreur plus spécifiques
+      if (err.message?.includes("User already registered")) {
+        errorMsg = "Cet email est déjà enregistré. Essayez de vous connecter directement.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Erreur de création de compte",
-        description: err.message || "Erreur inconnue",
+        description: errorMsg,
       });
     } finally {
       setLoading(false);
@@ -176,9 +279,10 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
         
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-              <span className="block sm:inline">{error}</span>
-            </div>
+            <Alert variant="destructive" className="bg-red-100">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           
           <div className="space-y-2">
@@ -232,12 +336,32 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
               type="button"
               variant="outline"
               size="sm"
-              className="text-xs"
+              className="text-xs mb-2"
               onClick={handleDebugSignUp}
               disabled={loading}
             >
               Créer un compte administrateur
             </Button>
+            
+            {debugInfo && (
+              <div className="mt-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-gray-500"
+                  onClick={() => setShowDebugInfo(!showDebugInfo)}
+                >
+                  {showDebugInfo ? "Masquer" : "Afficher"} les infos de débogage
+                </Button>
+                
+                {showDebugInfo && (
+                  <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-left overflow-auto max-h-40">
+                    <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </form>
       </div>
