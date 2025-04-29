@@ -56,21 +56,20 @@ declare module '@supabase/supabase-js' {
 export async function fetchVehicleImages(vehicleId: string | number) {
   const formattedId = formatVehicleId(vehicleId);
   
-  // Typage explicite pour éviter l'erreur
+  // Correction: utiliser le type générique directement avec rpc
   const { data, error } = await supabase
-    .rpc('get_vehicle_images', { 
+    .rpc<VehicleImage[]>('get_vehicle_images', { 
       v_id: formattedId 
-    } as Record<string, unknown>)
-    .returns<VehicleImage[]>();
+    } as Record<string, unknown>);
   
   return { data, error };
 }
 
 // Fonction pour ajouter des images de véhicule
 export async function addVehicleImages(images: VehicleImage[]) {
-  // Typage explicite pour éviter l'erreur
+  // Correction: utiliser le type générique directement avec rpc
   const { data, error } = await supabase
-    .rpc('add_vehicle_images', { 
+    .rpc<any>('add_vehicle_images', { 
       images_data: JSON.stringify(images) 
     } as Record<string, unknown>);
   
