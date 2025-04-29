@@ -34,13 +34,11 @@ export function extractImageUrls(data: any): string[] {
 // selon la configuration de votre base de données
 export function formatVehicleId(vehicleId: string | number): string | number {
   // Si votre colonne vehicle_id est de type integer/bigint dans Supabase
-  // Décommentez la ligne ci-dessous pour convertir en nombre
   // return typeof vehicleId === 'string' ? parseInt(vehicleId, 10) : vehicleId;
   
   // Si votre colonne vehicle_id est de type uuid/text dans Supabase
-  // Décommentez la ligne ci-dessous pour assurer que c'est une chaîne
-  // return typeof vehicleId === 'number' ? vehicleId.toString() : vehicleId;
+  return typeof vehicleId === 'number' ? vehicleId.toString() : vehicleId;
   
   // Par défaut, retourner l'ID tel quel
-  return vehicleId;
+  // return vehicleId;
 }
