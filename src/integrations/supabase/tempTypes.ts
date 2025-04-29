@@ -37,24 +37,14 @@ export function formatVehicleId(vehicleId: string | number): string {
   return typeof vehicleId === 'number' ? vehicleId.toString() : vehicleId;
 }
 
-// Type pour la fonction get_vehicle_images
-type GetVehicleImagesParams = {
-  v_id: string;
-}
-
-// Type pour la fonction add_vehicle_images
-type AddVehicleImagesParams = {
-  images_data: string;
-}
-
 // Fonctions utilitaires pour interagir avec la table vehicle_images
 export async function fetchVehicleImages(vehicleId: string | number) {
   const formattedId = formatVehicleId(vehicleId);
   
-  // Utilisation de la méthode rpc avec typage correct
+  // Correction du typage pour éviter l'erreur
   const { data, error } = await supabase.rpc(
     'get_vehicle_images', 
-    { v_id: formattedId }
+    { v_id: formattedId } as any
   );
   
   return { data, error };
@@ -62,10 +52,10 @@ export async function fetchVehicleImages(vehicleId: string | number) {
 
 // Fonction pour ajouter des images de véhicule
 export async function addVehicleImages(images: VehicleImage[]) {
-  // Utilisation de la méthode rpc avec typage correct
+  // Correction du typage pour éviter l'erreur
   const { data, error } = await supabase.rpc(
     'add_vehicle_images', 
-    { images_data: JSON.stringify(images) }
+    { images_data: JSON.stringify(images) } as any
   );
   
   return { data, error };
