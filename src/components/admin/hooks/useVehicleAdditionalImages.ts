@@ -9,7 +9,7 @@ export function useVehicleAdditionalImages() {
       const now = new Date().toISOString();
       // Insérer uniquement les images supplémentaires (à partir de l'index 1)
       const additionalImages = imageUrls.slice(1).map(url => ({
-        vehicle_id: vehicleId,
+        vehicle_id: vehicleId, // This will be stored as is, either as a string or converted by Supabase
         image_url: url,
         created_at: now,
       }));

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/carousel";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { isVehicleImageArray } from '@/integrations/supabase/tempTypes';
+import { extractImageUrls } from '@/integrations/supabase/tempTypes';
 
 interface CarCardProps {
   image: string;
@@ -52,21 +52,15 @@ const CarCard = ({ image, model, year, price, kilometers, fuel, vehicleId }: Car
               return;
             }
             
-            // Check if data exists and has the expected structure
-            if (data && Array.isArray(data)) {
-              // Safely extract image URLs
-              const additionalUrls = data
-                .filter(item => item && typeof item === 'object' && 'image_url' in item)
-                .map(item => item.image_url as string)
-                .filter(Boolean);
-                
-              if (additionalUrls.length > 0) {
-                setImages(prev => {
-                  // Merge main image with additional images and remove duplicates
-                  const allImages = [image, ...additionalUrls];
-                  return [...new Set(allImages)].filter(Boolean);
-                });
-              }
+            // Use the utility function to safely extract image URLs
+            const additionalUrls = extractImageUrls(data);
+            
+            if (additionalUrls.length > 0) {
+              setImages(prev => {
+                // Merge main image with additional images and remove duplicates
+                const allImages = [image, ...additionalUrls];
+                return [...new Set(allImages)].filter(Boolean);
+              });
             }
           } catch (queryError) {
             console.error("Erreur de requête:", queryError);
