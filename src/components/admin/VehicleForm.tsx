@@ -19,8 +19,10 @@ interface VehicleFormProps {
 }
 
 const VehicleForm = ({ vehicle, onSuccess }: VehicleFormProps) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(vehicle?.image_url || null);
-  const { loading, imageFile, setImageFile, onSubmit } = useVehicleForm({ vehicle, onSuccess });
+  const [imageUrls, setImageUrls] = useState<string[]>(
+    vehicle?.image_url ? [vehicle.image_url] : []
+  );
+  const { loading, imageFiles, setImageFiles, onSubmit } = useVehicleForm({ vehicle, onSuccess });
 
   const form = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleFormSchema),
@@ -47,9 +49,9 @@ const VehicleForm = ({ vehicle, onSuccess }: VehicleFormProps) => {
           <div>
             {/* Image upload section */}
             <VehicleImageUpload 
-              initialImageUrl={imageUrl}
-              onImageChange={setImageFile}
-              onImageUrlChange={setImageUrl}
+              initialImageUrls={imageUrls}
+              onImagesChange={setImageFiles}
+              onImageUrlsChange={setImageUrls}
             />
 
             <VehicleBasicFields form={form} />

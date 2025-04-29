@@ -15,43 +15,52 @@ interface UseVehicleFormProps {
 
 export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
   const [loading, setLoading] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const { toast } = useToast();
 
-  const uploadImage = async () => {
-    if (!imageFile) return vehicle?.image_url || null;
+  const uploadImages = async () => {
+    // Si pas de fichiers à uploader, on retourne les URLs existantes
+    if (imageFiles.length === 0) {
+      return vehicle?.image_url ? [vehicle.image_url] : [];
+    }
 
     try {
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-      const filePath = `vehicle_images/${fileName}`;
+      const uploadedUrls: string[] = [];
 
-      // Upload to Supabase Storage
-      const { error: uploadError, data } = await supabase.storage
-        .from('vehicles')
-        .upload(filePath, imageFile);
+      // Traiter chaque fichier
+      for (const imageFile of imageFiles) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+        const filePath = `vehicle_images/${fileName}`;
 
-      if (uploadError) {
-        console.error("Erreur d'upload:", uploadError);
-        // Check for bucket-related errors using the error message content only
-        if (uploadError.message && (
-            uploadError.message.includes('bucket') || 
-            uploadError.message.includes('404')
-          )) {
-          throw new Error("Le bucket de stockage 'vehicles' n'existe pas. Veuillez consulter les instructions pour le créer.");
+        // Upload à Supabase Storage
+        const { error: uploadError, data } = await supabase.storage
+          .from('vehicles')
+          .upload(filePath, imageFile);
+
+        if (uploadError) {
+          console.error("Erreur d'upload:", uploadError);
+          if (uploadError.message && (
+              uploadError.message.includes('bucket') || 
+              uploadError.message.includes('404')
+            )) {
+            throw new Error("Le bucket de stockage 'vehicles' n'existe pas. Veuillez consulter les instructions pour le créer.");
+          }
+          throw uploadError;
         }
-        throw uploadError;
+
+        // Obtenir l'URL publique
+        const { data: publicUrlData } = supabase.storage
+          .from('vehicles')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrlData.publicUrl);
       }
 
-      // Get public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('vehicles')
-        .getPublicUrl(filePath);
-
-      return publicUrlData.publicUrl;
+      return uploadedUrls;
     } catch (error) {
-      console.error("Error uploading image:", error);
-      return vehicle?.image_url || null;
+      console.error("Error uploading images:", error);
+      return vehicle?.image_url ? [vehicle.image_url] : [];
     }
   };
 
@@ -65,11 +74,13 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
         throw new Error("Vous devez être connecté pour effectuer cette action");
       }
       
-      const finalImageUrl = await uploadImage();
+      // Upload des images et récupération des URLs
+      const imageUrls = await uploadImages();
+      const primaryImageUrl = imageUrls.length > 0 ? imageUrls[0] : null;
       const now = new Date().toISOString();
 
       if (vehicle) {
-        // Update existing vehicle
+        // Mettre à jour le véhicule existant
         const { error } = await supabase
           .from("vehicles")
           .update({
@@ -81,7 +92,7 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
             fuel_type: formData.fuel_type,
             description: formData.description,
             is_sold: formData.is_sold,
-            image_url: finalImageUrl,
+            image_url: primaryImageUrl,
             updated_at: now,
           })
           .eq("id", vehicle.id);
@@ -98,9 +109,28 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
           }
           throw error;
         }
+
+        // Si nous avons des images supplémentaires, les ajouter à la table vehicle_images
+        if (imageUrls.length > 1) {
+          // Insérer uniquement les images supplémentaires (à partir de l'index 1)
+          const additionalImages = imageUrls.slice(1).map(url => ({
+            vehicle_id: vehicle.id,
+            image_url: url,
+            created_at: now,
+          }));
+          
+          const { error: imagesError } = await supabase
+            .from("vehicle_images")
+            .insert(additionalImages);
+            
+          if (imagesError) {
+            console.error("Erreur lors de l'ajout des images supplémentaires:", imagesError);
+            // On ne bloque pas le processus si l'ajout des images supplémentaires échoue
+          }
+        }
       } else {
-        // Add new vehicle
-        const { error } = await supabase
+        // Ajouter un nouveau véhicule
+        const { error, data: newVehicle } = await supabase
           .from("vehicles")
           .insert({
             brand: formData.brand,
@@ -111,10 +141,11 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
             fuel_type: formData.fuel_type,
             description: formData.description,
             is_sold: formData.is_sold,
-            image_url: finalImageUrl,
+            image_url: primaryImageUrl,
             created_at: now,
             updated_at: now,
-          });
+          })
+          .select();
 
         if (error) {
           console.error("Erreur d'ajout:", error);
@@ -127,6 +158,25 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
             });
           }
           throw error;
+        }
+
+        // Si nous avons des images supplémentaires et que le véhicule a été créé avec succès
+        if (imageUrls.length > 1 && newVehicle && newVehicle.length > 0) {
+          // Insérer uniquement les images supplémentaires (à partir de l'index 1)
+          const additionalImages = imageUrls.slice(1).map(url => ({
+            vehicle_id: newVehicle[0].id,
+            image_url: url,
+            created_at: now,
+          }));
+          
+          const { error: imagesError } = await supabase
+            .from("vehicle_images")
+            .insert(additionalImages);
+            
+          if (imagesError) {
+            console.error("Erreur lors de l'ajout des images supplémentaires:", imagesError);
+            // On ne bloque pas le processus si l'ajout des images supplémentaires échoue
+          }
         }
       }
 
@@ -152,8 +202,8 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
 
   return {
     loading,
-    imageFile,
-    setImageFile,
+    imageFiles,
+    setImageFiles,
     onSubmit
   };
 }

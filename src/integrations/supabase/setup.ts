@@ -55,7 +55,7 @@ export function getRLSInstructions() {
       "Allez dans 'Authentication' puis 'Policies'",
       "Ajoutez une politique pour la table 'vehicles' qui autorise les administrateurs",
       "Exemple de politique: (auth.uid() IN (SELECT id FROM profiles))",
-      "Faites de même pour le bucket 'vehicles' dans Storage"
+      "Faites de même pour la table 'vehicle_images' et le bucket 'vehicles' dans Storage"
     ]
   };
 }
