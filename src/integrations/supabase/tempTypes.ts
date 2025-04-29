@@ -52,7 +52,7 @@ export async function fetchVehicleImages(vehicleId: string | number) {
   const formattedId = formatVehicleId(vehicleId);
   
   // Utilisation de la méthode rpc avec typage correct
-  const { data, error } = await supabase.rpc<any, GetVehicleImagesParams>(
+  const { data, error } = await supabase.rpc(
     'get_vehicle_images', 
     { v_id: formattedId }
   );
@@ -63,7 +63,7 @@ export async function fetchVehicleImages(vehicleId: string | number) {
 // Fonction pour ajouter des images de véhicule
 export async function addVehicleImages(images: VehicleImage[]) {
   // Utilisation de la méthode rpc avec typage correct
-  const { data, error } = await supabase.rpc<any, AddVehicleImagesParams>(
+  const { data, error } = await supabase.rpc(
     'add_vehicle_images', 
     { images_data: JSON.stringify(images) }
   );
