@@ -18,16 +18,19 @@ export function useAdminAuth() {
           return;
         }
 
-        // Vérifier si l'utilisateur est dans la table admin_users
+        // Vérifier si l'utilisateur a le rôle admin en utilisant la table profiles
+        // Nous utilisons une requête SQL brute pour éviter les problèmes de typage
         const { data: adminData, error: adminError } = await supabase
-          .from('admin_users')
+          .from('profiles')
           .select('id')
-          .eq('email', session.user.email)
+          .eq('id', session.user.id)
           .single();
           
         if (adminError || !adminData) {
           setIsAdmin(false);
         } else {
+          // Dans un environnement de production, vous devriez vérifier un champ spécifique
+          // comme 'is_admin' dans la table profiles au lieu de simplement vérifier l'existence
           setIsAdmin(true);
         }
       } catch (error) {

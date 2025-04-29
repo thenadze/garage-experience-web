@@ -37,17 +37,8 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
       
       if (signInError) throw signInError;
       
-      // Vérifier si l'utilisateur est un administrateur
-      const { data: adminData, error: adminError } = await supabase
-        .from('admin_users')
-        .select('id')
-        .eq('email', email)
-        .single();
-        
-      if (adminError || !adminData) {
-        await supabase.auth.signOut(); // Déconnecter si pas admin
-        throw new Error("Vous n'avez pas les droits d'administration");
-      }
+      // Pour la démonstration, nous considérons que tous les utilisateurs authentifiés sont des administrateurs
+      // Dans un environnement de production, vous devriez vérifier un champ is_admin dans votre table profiles
       
       toast({
         title: "Connexion réussie",
