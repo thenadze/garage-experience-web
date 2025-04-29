@@ -1,6 +1,7 @@
 
 import { Database } from './types';
 import { supabase } from './client';
+import { PostgrestResponse } from '@supabase/supabase-js';
 
 // Définition d'un type pour les images de véhicules
 export interface VehicleImage {
@@ -47,7 +48,7 @@ declare module '@supabase/supabase-js' {
         head?: boolean;
         count?: null | 'exact' | 'planned' | 'estimated';
       }
-    ): SupabasePromise<T>;
+    ): Promise<PostgrestResponse<T>>;
   }
 }
 
