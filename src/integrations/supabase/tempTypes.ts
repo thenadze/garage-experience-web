@@ -11,5 +11,10 @@ export interface VehicleImage {
 
 // Fonction utilitaire pour vérifier si les données sont des images de véhicules
 export function isVehicleImageArray(data: any): data is VehicleImage[] {
-  return Array.isArray(data) && data.length > 0 && 'image_url' in data[0];
+  return Array.isArray(data) && 
+         data.length > 0 && 
+         typeof data[0] === 'object' &&
+         data[0] !== null &&
+         'image_url' in data[0] &&
+         typeof data[0].image_url === 'string';
 }

@@ -39,26 +39,43 @@ const CarCard = ({ image, model, year, price, kilometers, fuel, vehicleId }: Car
     if (vehicleId) {
       const fetchAdditionalImages = async () => {
         try {
-          // Utilisation de "as any" pour contourner les vérifications TypeScript
-          // en attendant que la table soit créée dans Supabase et les types générés
-          const { data, error } = await supabase
-            .from('vehicle_images' as any)
-            .select('*')
-            .eq('vehicle_id', vehicleId);
+          // Use a try/catch block to handle potential errors
+          try {
+            // Using "as any" to bypass TypeScript check until the table exists
+            const { data, error } = await supabase
+              .from('vehicle_images' as any)
+              .select('*')
+              .eq('vehicle_id', vehicleId);
+              
+            if (error) {
+              console.error("Erreur lors de la récupération des images:", error);
+              return;
+            }
             
-          if (!error && data && isVehicleImageArray(data)) {
-            const additionalUrls = data.map(item => item.image_url).filter(Boolean);
-            setImages(prev => {
-              // Fusionner l'image principale avec les images supplémentaires
-              // et éliminer les doublons potentiels
-              const allImages = [image, ...additionalUrls];
-              return [...new Set(allImages)].filter(Boolean);
-            });
+            // Check if data exists and has the expected structure
+            if (data && Array.isArray(data)) {
+              // Safely extract image URLs
+              const additionalUrls = data
+                .filter(item => item && typeof item === 'object' && 'image_url' in item)
+                .map(item => item.image_url as string)
+                .filter(Boolean);
+                
+              if (additionalUrls.length > 0) {
+                setImages(prev => {
+                  // Merge main image with additional images and remove duplicates
+                  const allImages = [image, ...additionalUrls];
+                  return [...new Set(allImages)].filter(Boolean);
+                });
+              }
+            }
+          } catch (queryError) {
+            console.error("Erreur de requête:", queryError);
+            // Table might not exist yet - silently fail
           }
         } catch (error) {
-          console.error("Erreur lors de la récupération des images:", error);
-          // En cas d'erreur, utiliser au moins l'image principale
-          if (image) {
+          console.error("Erreur générale:", error);
+          // In case of any error, ensure we at least have the main image
+          if (image && !images.includes(image)) {
             setImages([image]);
           }
         }

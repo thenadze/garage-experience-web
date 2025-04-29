@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export function useVehicleAdditionalImages() {
   const tryAddAdditionalImages = async (vehicleId: string, imageUrls: string[]) => {
-    if (imageUrls.length <= 1) return;
+    if (!imageUrls || imageUrls.length <= 1) return;
     
     try {
       const now = new Date().toISOString();
@@ -14,10 +14,11 @@ export function useVehicleAdditionalImages() {
         created_at: now,
       }));
       
+      if (additionalImages.length === 0) return;
+      
       // Capture l'erreur silencieusement si la table n'existe pas encore
       try {
-        // Use as any to bypass TypeScript validation since the vehicle_images table
-        // might not be in the generated types yet
+        // Using type assertion to bypass TypeScript validation
         const { error } = await supabase
           .from('vehicle_images' as any)
           .insert(additionalImages as any);
@@ -27,6 +28,7 @@ export function useVehicleAdditionalImages() {
         }
       } catch (insertError) {
         console.error("Erreur lors de l'insertion des images supplémentaires:", insertError);
+        // Table might not exist yet - this is expected in some cases
       }
     } catch (error) {
       console.error("Erreur lors de la préparation des images supplémentaires:", error);
