@@ -10,7 +10,25 @@ export function useDebugInfo() {
   };
 
   const updateDebugInfo = (info: any) => {
-    setDebugInfo(info);
+    // Process authentication errors to provide more helpful messages
+    if (info && info.__isAuthError && info.code === "invalid_credentials") {
+      const enhancedInfo = {
+        ...info,
+        possibleCauses: [
+          "RLS (Row-Level Security) policies are blocking authentication",
+          "Email or password may be incorrect",
+          "User may not exist in the auth.users table"
+        ],
+        suggestedActions: [
+          "Check your RLS policies in Supabase and temporarily disable them for testing",
+          "Verify the email and password are correct",
+          "Ensure the user exists in the Supabase Authentication dashboard"
+        ]
+      };
+      setDebugInfo(enhancedInfo);
+    } else {
+      setDebugInfo(info);
+    }
   };
 
   const clearDebugInfo = () => {
