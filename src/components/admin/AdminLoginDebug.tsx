@@ -60,12 +60,6 @@ const AdminLoginDebug = ({
                   ))}
                 </ul>
               </div>
-
-              {isProfileRLSError && (
-                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
-                  <p className="text-green-800 font-medium">Note: Vous êtes authentifié, mais le profil n'a pas pu être créé à cause des politiques RLS.</p>
-                </div>
-              )}
             </div>
           )}
           

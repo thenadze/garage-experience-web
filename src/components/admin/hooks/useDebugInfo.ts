@@ -39,7 +39,6 @@ export function useDebugInfo() {
         suggestedActions: [
           "Modifier votre politique RLS pour 'profiles' avec: using(auth.uid() = id) with check(auth.uid() = id)",
           "Vérifier que la politique est activée et correctement configurée",
-          "Désactiver temporairement RLS sur 'profiles' pour tester",
           "Vérifier dans l'onglet 'SQL Editor' de Supabase si la table 'profiles' contient déjà une entrée pour cet utilisateur"
         ]
       };

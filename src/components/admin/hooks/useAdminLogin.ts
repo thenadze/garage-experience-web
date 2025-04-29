@@ -51,16 +51,11 @@ export function useAdminLogin(onSuccess: () => void) {
         console.error("Erreur Supabase:", signInError);
         
         // Détecter si c'est probablement une erreur RLS
-        // Utiliser le code d'erreur plutôt que la propriété protégée
         const isRLSProblem = signInError instanceof AuthError && 
                             signInError.code === "invalid_credentials";
         
         if (isRLSProblem) {
           console.log("Erreur d'authentification potentiellement liée au RLS, tentative de diagnostic...");
-          
-          // Utilisez une méthode disponible comme getUser ou getUserById si nécessaire
-          // Mais pour simplifier, supprimons cette partie qui n'est pas essentielle
-          console.log("Vérification des informations utilisateur impossible via l'API admin - droits insuffisants");
         }
         
         throw signInError;
@@ -112,19 +107,21 @@ export function useAdminLogin(onSuccess: () => void) {
             toast({
               variant: "destructive",
               title: "Erreur RLS sur le profil",
-              description: "Votre connexion a réussi, mais la création du profil a échoué à cause des politiques RLS. Vérifiez vos politiques RLS pour la table 'profiles'.",
+              description: "Votre connexion a échoué car les politiques RLS empêchent la création du profil. Vérifiez vos politiques RLS pour la table 'profiles'.",
             });
             
-            // On renvoie quand même un succès pour permettre la création du profil manuellement
-            onSuccess();
+            // Au lieu de retourner un succès, nous retournons une erreur
+            // et nous ne faisons PAS de onSuccess()
+            await supabase.auth.signOut(); // Déconnexion pour éviter une session partiellement valide
+            
             return { 
-              success: true, 
+              success: false, 
               debugInfo: {
                 ...data,
                 isAuthError: false,
                 isRLSError: true,
                 code: "rls_profile_creation",
-                message: "Connexion réussie mais erreur RLS sur création de profil",
+                message: "Erreur RLS sur création de profil",
                 originalError: createProfileError
               }
             };
@@ -134,6 +131,17 @@ export function useAdminLogin(onSuccess: () => void) {
               title: "Erreur de profil",
               description: "Impossible de créer votre profil. Vérifiez les droits RLS dans Supabase.",
             });
+            
+            // Déconnexion en cas d'erreur
+            await supabase.auth.signOut();
+            
+            return {
+              success: false,
+              debugInfo: {
+                error: createProfileError,
+                message: "Erreur de création de profil"
+              }
+            };
           }
         } else {
           console.log("Profil créé avec succès");
@@ -158,11 +166,6 @@ export function useAdminLogin(onSuccess: () => void) {
       if (err.message) {
         if (err.message.includes("Invalid login credentials")) {
           errorMessage = "Email ou mot de passe incorrect. Vérifiez vos identifiants Supabase.";
-          
-          // Ajouter des informations supplémentaires liées au RLS
-          // Utiliser des propriétés publiques pour stocker les informations
-          err.isRLSProblem = true;
-          err.rls_detail = "Cette erreur peut être causée par des politiques RLS bloquant l'authentification";
         } else {
           errorMessage = err.message;
         }
