@@ -9,49 +9,39 @@ import VehicleForm from "@/components/admin/VehicleForm";
 import { Car, Eye, LogOut, Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { setupSupabaseResources, getRLSInstructions } from "@/integrations/supabase/setup";
+import { setupSupabaseResources } from "@/integrations/supabase/setup";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 const Admin = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("list");
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
   const [setupComplete, setSetupComplete] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  // Check for stored authentication
-  useEffect(() => {
-    const authStatus = localStorage.getItem("adminAuthenticated");
-    console.log("État d'authentification trouvé:", authStatus);
-    if (authStatus === "true") {
-      setIsAuthenticated(true);
-    }
-  }, []);
+  const { isAdmin, loading: authLoading, logout } = useAdminAuth();
 
   // Setup Supabase resources when admin is authenticated
   useEffect(() => {
-    if (isAuthenticated && !setupComplete) {
+    if (isAdmin && !setupComplete) {
       const initializeResources = async () => {
         const result = await setupSupabaseResources();
-        if (!result.success) {
-          const rlsInfo = getRLSInstructions();
+        if (result.success) {
+          setSetupComplete(true);
+        } else {
           toast({
             variant: "destructive",
-            title: rlsInfo.title,
-            description: "Des problèmes de configuration empêchent l'ajout de véhicules. Vérifiez la console pour plus d'informations."
+            title: "Erreur de configuration",
+            description: "Des problèmes de configuration empêchent l'ajout de véhicules. Vérifiez les permissions RLS dans Supabase."
           });
-        } else {
-          setSetupComplete(true);
         }
       };
       
       initializeResources();
     }
-  }, [isAuthenticated, toast, setupComplete]);
+  }, [isAdmin, toast, setupComplete]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("adminAuthenticated");
-    setIsAuthenticated(false);
+  const handleLogout = async () => {
+    await logout();
     toast({
       title: "Déconnexion réussie",
       description: "Vous avez été déconnecté de l'interface d'administration.",
@@ -83,12 +73,19 @@ const Admin = () => {
     navigate("/");
   };
 
-  if (!isAuthenticated) {
-    console.log("Affichage du formulaire de connexion admin");
-    return <AdminLogin onSuccess={() => setIsAuthenticated(true)} />;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-garage-red border-t-transparent rounded-full"></div>
+        <span className="ml-2">Chargement...</span>
+      </div>
+    );
   }
 
-  console.log("Affichage de l'interface d'administration");
+  if (!isAdmin) {
+    return <AdminLogin onSuccess={() => window.location.reload()} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-garage-black text-white py-4 px-6 flex justify-between items-center">

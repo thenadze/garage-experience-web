@@ -59,6 +59,12 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
     setLoading(true);
     
     try {
+      // Vérifier d'abord si l'utilisateur est authentifié
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Vous devez être connecté pour effectuer cette action");
+      }
+      
       const finalImageUrl = await uploadImage();
       const now = new Date().toISOString();
 

@@ -4,57 +4,67 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { Car } from "lucide-react";
-
-// Ces identifiants devraient idéalement être conservés de manière plus sécurisée,
-// comme dans une base de données ou via l'authentification Supabase
-const ADMIN_CREDENTIALS = [
-  { username: "admin", password: "garage2025" },
-  { username: "nadze123", password: "1234" }
-];
+import { supabase } from "@/integrations/supabase/client";
 
 interface AdminLoginProps {
   onSuccess: () => void;
 }
 
 const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     
-    // Validation simple
-    if (!username.trim() || !password.trim()) {
+    if (!email.trim() || !password.trim()) {
       setError("Veuillez remplir tous les champs");
       return;
     }
     
-    console.log("Tentative de connexion avec:", username, password);
-    console.log("Credentials disponibles:", ADMIN_CREDENTIALS);
-    
-    // Vérification des identifiants
-    const validUser = ADMIN_CREDENTIALS.find(
-      cred => cred.username === username && cred.password === password
-    );
-    
-    if (validUser) {
-      console.log("Authentification réussie");
-      localStorage.setItem("adminAuthenticated", "true");
+    try {
+      setLoading(true);
+      
+      // Authentification avec Supabase
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (signInError) throw signInError;
+      
+      // Vérifier si l'utilisateur est un administrateur
+      const { data: adminData, error: adminError } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('email', email)
+        .single();
+        
+      if (adminError || !adminData) {
+        await supabase.auth.signOut(); // Déconnecter si pas admin
+        throw new Error("Vous n'avez pas les droits d'administration");
+      }
+      
       toast({
         title: "Connexion réussie",
         description: "Bienvenue dans l'interface d'administration.",
       });
+      
       onSuccess();
-    } else {
-      console.log("Authentification échouée");
-      setError("Identifiants incorrects");
+    } catch (err: any) {
+      console.error("Erreur de connexion:", err);
+      setError(err.message || "Identifiants incorrects");
       toast({
         variant: "destructive",
         title: "Erreur de connexion",
-        description: "Nom d'utilisateur ou mot de passe incorrect.",
+        description: err.message || "Nom d'utilisateur ou mot de passe incorrect.",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,16 +87,17 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
           )}
           
           <div className="space-y-2">
-            <label htmlFor="username" className="block text-sm font-medium">
-              Nom d'utilisateur
+            <label htmlFor="email" className="block text-sm font-medium">
+              Email
             </label>
             <Input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Entrez votre nom d'utilisateur"
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Entrez votre email"
               className={error ? "border-red-500" : ""}
+              disabled={loading}
             />
           </div>
           
@@ -101,14 +112,23 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Entrez votre mot de passe"
               className={error ? "border-red-500" : ""}
+              disabled={loading}
             />
           </div>
           
           <Button 
             type="submit" 
             className="w-full bg-garage-red hover:bg-garage-red/90"
+            disabled={loading}
           >
-            Connexion
+            {loading ? (
+              <>
+                <div className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent rounded-full"></div>
+                Connexion...
+              </>
+            ) : (
+              "Connexion"
+            )}
           </Button>
         </form>
       </div>
