@@ -33,7 +33,7 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
 
       if (uploadError) {
         console.error("Erreur d'upload:", uploadError);
-        if (uploadError.message.includes('bucket') || uploadError.status === 404) {
+        if (uploadError.message.includes('bucket') || uploadError.message.includes('404')) {
           throw new Error("Le bucket de stockage 'vehicles' n'existe pas. Veuillez consulter les instructions pour le créer.");
         }
         throw uploadError;
