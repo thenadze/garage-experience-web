@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/carousel";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { extractImageUrls } from '@/integrations/supabase/tempTypes';
+import { extractImageUrls, formatVehicleId } from '@/integrations/supabase/tempTypes';
 
 interface CarCardProps {
   image: string;
@@ -39,13 +39,16 @@ const CarCard = ({ image, model, year, price, kilometers, fuel, vehicleId }: Car
     if (vehicleId) {
       const fetchAdditionalImages = async () => {
         try {
+          // Formater l'ID du véhicule pour correspondre au type de la colonne dans Supabase
+          const formattedVehicleId = formatVehicleId(vehicleId);
+          
           // Use a try/catch block to handle potential errors
           try {
             // Using "as any" to bypass TypeScript check until the table exists
             const { data, error } = await supabase
               .from('vehicle_images' as any)
               .select('*')
-              .eq('vehicle_id', vehicleId);
+              .eq('vehicle_id', formattedVehicleId);
               
             if (error) {
               console.error("Erreur lors de la récupération des images:", error);

@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { formatVehicleId } from "@/integrations/supabase/tempTypes";
 
 export function useVehicleAdditionalImages() {
   const tryAddAdditionalImages = async (vehicleId: string, imageUrls: string[]) => {
@@ -7,9 +8,12 @@ export function useVehicleAdditionalImages() {
     
     try {
       const now = new Date().toISOString();
+      // Préparer l'ID du véhicule dans le format approprié
+      const formattedVehicleId = formatVehicleId(vehicleId);
+      
       // Insérer uniquement les images supplémentaires (à partir de l'index 1)
       const additionalImages = imageUrls.slice(1).map(url => ({
-        vehicle_id: vehicleId, // This will be stored as is, either as a string or converted by Supabase
+        vehicle_id: formattedVehicleId,
         image_url: url,
         created_at: now,
       }));
