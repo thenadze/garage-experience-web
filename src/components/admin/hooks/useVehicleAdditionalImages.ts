@@ -1,5 +1,5 @@
 
-import { formatVehicleId, addVehicleImages } from "@/integrations/supabase/tempTypes";
+import { formatVehicleId, addVehicleImages, VehicleImage } from "@/integrations/supabase/tempTypes";
 
 export function useVehicleAdditionalImages() {
   const tryAddAdditionalImages = async (vehicleId: string | number, imageUrls: string[]) => {
@@ -7,7 +7,7 @@ export function useVehicleAdditionalImages() {
     
     try {
       const now = new Date().toISOString();
-      // Convertir l'ID du véhicule en integer
+      // Convertir l'ID du véhicule au format approprié
       const formattedVehicleId = formatVehicleId(vehicleId);
       
       // Insérer uniquement les images supplémentaires (à partir de l'index 1)
@@ -15,7 +15,7 @@ export function useVehicleAdditionalImages() {
         vehicle_id: formattedVehicleId,
         image_url: url,
         created_at: now,
-      }));
+      } as VehicleImage));
       
       if (additionalImages.length === 0) return;
       
