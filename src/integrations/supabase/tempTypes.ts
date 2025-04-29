@@ -50,9 +50,12 @@ export type AddVehicleImagesParams = {
 export async function fetchVehicleImages(vehicleId: string | number) {
   const formattedId = formatVehicleId(vehicleId);
   
+  // Type explicite pour indiquer à TypeScript le type attendu
+  const params: Record<string, string> = { v_id: formattedId };
+  
   const { data, error } = await supabase.rpc(
     'get_vehicle_images', 
-    { v_id: formattedId } as { v_id: string }
+    params
   );
   
   return { data, error };
@@ -60,9 +63,12 @@ export async function fetchVehicleImages(vehicleId: string | number) {
 
 // Fonction pour ajouter des images de véhicule
 export async function addVehicleImages(images: VehicleImage[]) {
+  // Type explicite pour indiquer à TypeScript le type attendu
+  const params: Record<string, string> = { images_data: JSON.stringify(images) };
+  
   const { data, error } = await supabase.rpc(
     'add_vehicle_images', 
-    { images_data: JSON.stringify(images) } as { images_data: string }
+    params
   );
   
   return { data, error };
