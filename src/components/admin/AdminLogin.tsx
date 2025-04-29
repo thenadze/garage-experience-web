@@ -51,13 +51,27 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
         .single();
       
       if (profileError) {
-        console.error("Erreur de récupération du profil:", profileError);
-        toast({
-          variant: "destructive",
-          title: "Profil non trouvé",
-          description: "Votre compte existe mais aucun profil admin n'est associé. Contactez l'administrateur système.",
-        });
-        // On continue quand même pour faciliter le débogage
+        console.log("Profil non trouvé, tentative de création");
+        // Créer un profil avec les champs corrects
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            first_name: "Admin",
+            last_name: "User",
+            created_at: new Date().toISOString()
+          });
+        
+        if (createProfileError) {
+          console.error("Erreur de création du profil:", createProfileError);
+          toast({
+            variant: "destructive",
+            title: "Erreur de profil",
+            description: "Impossible de créer votre profil. Vérifiez les droits RLS dans Supabase.",
+          });
+        } else {
+          console.log("Profil créé avec succès");
+        }
       } else {
         console.log("Profil trouvé:", profileData);
       }
@@ -114,6 +128,24 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
       if (error) throw error;
       
       console.log("Création du compte:", data);
+      
+      // Si l'inscription réussit, créer un profil pour l'utilisateur
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            first_name: "Admin",
+            last_name: "User",
+            created_at: new Date().toISOString()
+          });
+          
+        if (profileError) {
+          console.error("Erreur de création du profil:", profileError);
+        } else {
+          console.log("Profil créé avec succès");
+        }
+      }
       
       toast({
         title: "Compte créé",

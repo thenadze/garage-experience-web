@@ -39,13 +39,14 @@ export function useAdminAuth() {
           if (adminError.code === 'PGRST116') {
             console.log("Profil non trouvé - tentative de création");
             
-            // Tenter de créer un profil pour cet utilisateur
+            // Tenter de créer un profil pour cet utilisateur avec les champs corrects selon le schéma
             const { error: insertError } = await supabase
               .from('profiles')
               .insert({
                 id: session.user.id,
-                email: session.user.email,
-                updated_at: new Date().toISOString()
+                first_name: "Admin", // Valeur par défaut
+                last_name: "User",   // Valeur par défaut
+                created_at: new Date().toISOString()
               });
             
             if (insertError) {
