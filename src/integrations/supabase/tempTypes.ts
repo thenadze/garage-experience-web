@@ -38,30 +38,12 @@ export function formatVehicleId(vehicleId: string | number): string {
 }
 
 // Définition des types pour les fonctions RPC
-type GetVehicleImagesParams = {
+export type GetVehicleImagesParams = {
   v_id: string;
 }
 
-type AddVehicleImagesParams = {
+export type AddVehicleImagesParams = {
   images_data: string;
-}
-
-// Extension du type Database pour inclure nos fonctions RPC
-declare module './types' {
-  interface Database {
-    public: {
-      Functions: {
-        get_vehicle_images: {
-          Args: GetVehicleImagesParams;
-          Returns: VehicleImage[];
-        };
-        add_vehicle_images: {
-          Args: AddVehicleImagesParams;
-          Returns: unknown;
-        };
-      };
-    };
-  }
 }
 
 // Fonctions utilitaires pour interagir avec la table vehicle_images
@@ -70,7 +52,7 @@ export async function fetchVehicleImages(vehicleId: string | number) {
   
   const { data, error } = await supabase.rpc(
     'get_vehicle_images', 
-    { v_id: formattedId }
+    { v_id: formattedId } as { v_id: string }
   );
   
   return { data, error };
@@ -80,7 +62,7 @@ export async function fetchVehicleImages(vehicleId: string | number) {
 export async function addVehicleImages(images: VehicleImage[]) {
   const { data, error } = await supabase.rpc(
     'add_vehicle_images', 
-    { images_data: JSON.stringify(images) }
+    { images_data: JSON.stringify(images) } as { images_data: string }
   );
   
   return { data, error };
