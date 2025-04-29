@@ -39,9 +39,10 @@ const CarCard = ({ image, model, year, price, kilometers, fuel, vehicleId }: Car
     if (vehicleId) {
       const fetchAdditionalImages = async () => {
         try {
-          // Notez que ceci fonctionnera uniquement après que vous ayez créé la table vehicle_images dans Supabase
+          // Utilisation de "as any" pour contourner les vérifications TypeScript
+          // en attendant que la table soit créée dans Supabase et les types générés
           const { data, error } = await supabase
-            .from('vehicle_images')
+            .from('vehicle_images' as any)
             .select('*')
             .eq('vehicle_id', vehicleId);
             
