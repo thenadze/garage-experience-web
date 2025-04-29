@@ -65,6 +65,31 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
     }
   };
 
+  const tryAddAdditionalImages = async (vehicleId: string, imageUrls: string[]) => {
+    if (imageUrls.length <= 1) return;
+    
+    try {
+      const now = new Date().toISOString();
+      // Insérer uniquement les images supplémentaires (à partir de l'index 1)
+      const additionalImages = imageUrls.slice(1).map(url => ({
+        vehicle_id: vehicleId,
+        image_url: url,
+        created_at: now,
+      }));
+      
+      // Capture l'erreur silencieusement si la table n'existe pas encore
+      const { error } = await supabase
+        .from('vehicle_images')
+        .insert(additionalImages);
+        
+      if (error) {
+        console.error("Erreur lors de l'ajout des images supplémentaires:", error);
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'insertion des images supplémentaires:", error);
+    }
+  };
+
   const onSubmit = async (formData: VehicleFormValues) => {
     setLoading(true);
     
@@ -111,31 +136,9 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
           throw error;
         }
 
-        // Si nous avons des images supplémentaires, les ajouter à la table vehicle_images
-        if (imageUrls.length > 1) {
-          try {
-            // Insérer uniquement les images supplémentaires (à partir de l'index 1)
-            const additionalImages = imageUrls.slice(1).map(url => ({
-              vehicle_id: vehicle.id,
-              image_url: url,
-              created_at: now,
-            }));
-            
-            // Notez que cette opération ne fonctionnera que lorsque vous aurez créé la table dans Supabase
-            // Pour le moment, on capture simplement l'erreur sans bloquer l'exécution
-            const { error: imagesError } = await supabase
-              .from("vehicle_images")
-              .insert(additionalImages as any); // Utilisation du type 'any' temporairement
-              
-            if (imagesError) {
-              console.error("Erreur lors de l'ajout des images supplémentaires:", imagesError);
-              // On ne bloque pas le processus si l'ajout des images supplémentaires échoue
-            }
-          } catch (error) {
-            console.error("Erreur lors de l'insertion des images supplémentaires:", error);
-            // Ne pas bloquer le processus principal
-          }
-        }
+        // Ajouter les images supplémentaires
+        await tryAddAdditionalImages(vehicle.id, imageUrls);
+        
       } else {
         // Ajouter un nouveau véhicule
         const { error, data: newVehicle } = await supabase
@@ -168,30 +171,9 @@ export function useVehicleForm({ vehicle, onSuccess }: UseVehicleFormProps) {
           throw error;
         }
 
-        // Si nous avons des images supplémentaires et que le véhicule a été créé avec succès
-        if (imageUrls.length > 1 && newVehicle && newVehicle.length > 0) {
-          try {
-            // Insérer uniquement les images supplémentaires (à partir de l'index 1)
-            const additionalImages = imageUrls.slice(1).map(url => ({
-              vehicle_id: newVehicle[0].id,
-              image_url: url,
-              created_at: now,
-            }));
-            
-            // Notez que cette opération ne fonctionnera que lorsque vous aurez créé la table dans Supabase
-            // Pour le moment, on capture simplement l'erreur sans bloquer l'exécution
-            const { error: imagesError } = await supabase
-              .from("vehicle_images")
-              .insert(additionalImages as any); // Utilisation du type 'any' temporairement
-              
-            if (imagesError) {
-              console.error("Erreur lors de l'ajout des images supplémentaires:", imagesError);
-              // On ne bloque pas le processus si l'ajout des images supplémentaires échoue
-            }
-          } catch (error) {
-            console.error("Erreur lors de l'insertion des images supplémentaires:", error);
-            // Ne pas bloquer le processus principal
-          }
+        // Ajouter les images supplémentaires si le véhicule a été créé
+        if (newVehicle && newVehicle.length > 0) {
+          await tryAddAdditionalImages(newVehicle[0].id, imageUrls);
         }
       }
 
