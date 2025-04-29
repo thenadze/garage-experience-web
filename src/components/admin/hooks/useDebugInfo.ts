@@ -26,7 +26,26 @@ export function useDebugInfo() {
         ]
       };
       setDebugInfo(enhancedInfo);
-    } else {
+    } 
+    // Gérer spécifiquement l'erreur de création de profil RLS
+    else if (info && info.__isRLSError && info.code === "rls_profile_creation") {
+      const enhancedInfo = {
+        ...info,
+        possibleCauses: [
+          "RLS policies on 'profiles' table are blocking INSERT operations",
+          "The policy you configured isn't working correctly",
+          "The authenticated user doesn't have permission to create their profile"
+        ],
+        suggestedActions: [
+          "Modifier votre politique RLS pour 'profiles' avec: using(auth.uid() = id) with check(auth.uid() = id)",
+          "Vérifier que la politique est activée et correctement configurée",
+          "Désactiver temporairement RLS sur 'profiles' pour tester",
+          "Vérifier dans l'onglet 'SQL Editor' de Supabase si la table 'profiles' contient déjà une entrée pour cet utilisateur"
+        ]
+      };
+      setDebugInfo(enhancedInfo);
+    }
+    else {
       setDebugInfo(info);
     }
   };
