@@ -4,7 +4,7 @@ import { Database } from './types';
 // Extension temporaire des types Supabase pour inclure vehicle_images
 export interface VehicleImage {
   id: string | number;
-  vehicle_id: string | number; // Support both string (UUID) and number formats
+  vehicle_id: number; // Défini comme number pour integer dans Supabase
   image_url: string;
   created_at: string;
 }
@@ -32,10 +32,7 @@ export function extractImageUrls(data: any): string[] {
 
 // Fonction pour convertir l'ID du véhicule au format approprié 
 // selon la configuration de votre base de données
-export function formatVehicleId(vehicleId: string | number): string | number {
-  // Si votre colonne vehicle_id est de type integer dans Supabase
+export function formatVehicleId(vehicleId: string | number): number {
+  // Pour une colonne vehicle_id de type integer dans Supabase
   return typeof vehicleId === 'string' ? parseInt(vehicleId, 10) : vehicleId;
-  
-  // Si votre colonne vehicle_id est de type uuid/text dans Supabase
-  // return typeof vehicleId === 'number' ? vehicleId.toString() : vehicleId;
 }

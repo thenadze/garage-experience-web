@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import {
   Carousel,
@@ -18,7 +17,7 @@ interface CarCardProps {
   price: number;
   kilometers: number;
   fuel: string;
-  vehicleId?: string;
+  vehicleId?: string | number;
 }
 
 const CarCard = ({ image, model, year, price, kilometers, fuel, vehicleId }: CarCardProps) => {
@@ -39,39 +38,32 @@ const CarCard = ({ image, model, year, price, kilometers, fuel, vehicleId }: Car
     if (vehicleId) {
       const fetchAdditionalImages = async () => {
         try {
-          // Formater l'ID du véhicule pour correspondre au type de la colonne dans Supabase
+          // Convertir l'ID du véhicule en integer pour correspondre au type de la colonne
           const formattedVehicleId = formatVehicleId(vehicleId);
           
-          // Use a try/catch block to handle potential errors
-          try {
-            // Using "as any" to bypass TypeScript check until the table exists
-            const { data, error } = await supabase
-              .from('vehicle_images' as any)
-              .select('*')
-              .eq('vehicle_id', formattedVehicleId);
+          const { data, error } = await supabase
+            .from('vehicle_images')
+            .select('*')
+            .eq('vehicle_id', formattedVehicleId);
               
-            if (error) {
-              console.error("Erreur lors de la récupération des images:", error);
-              return;
-            }
-            
-            // Use the utility function to safely extract image URLs
-            const additionalUrls = extractImageUrls(data);
-            
-            if (additionalUrls.length > 0) {
-              setImages(prev => {
-                // Merge main image with additional images and remove duplicates
-                const allImages = [image, ...additionalUrls];
-                return [...new Set(allImages)].filter(Boolean);
-              });
-            }
-          } catch (queryError) {
-            console.error("Erreur de requête:", queryError);
-            // Table might not exist yet - silently fail
+          if (error) {
+            console.error("Erreur lors de la récupération des images:", error);
+            return;
+          }
+          
+          // Utiliser la fonction utilitaire pour extraire les URLs d'images en toute sécurité
+          const additionalUrls = extractImageUrls(data);
+          
+          if (additionalUrls.length > 0) {
+            setImages(prev => {
+              // Fusionner l'image principale avec les images supplémentaires et supprimer les doublons
+              const allImages = [image, ...additionalUrls];
+              return [...new Set(allImages)].filter(Boolean);
+            });
           }
         } catch (error) {
           console.error("Erreur générale:", error);
-          // In case of any error, ensure we at least have the main image
+          // En cas d'erreur, s'assurer qu'on a au moins l'image principale
           if (image && !images.includes(image)) {
             setImages([image]);
           }

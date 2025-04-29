@@ -3,12 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatVehicleId } from "@/integrations/supabase/tempTypes";
 
 export function useVehicleAdditionalImages() {
-  const tryAddAdditionalImages = async (vehicleId: string, imageUrls: string[]) => {
+  const tryAddAdditionalImages = async (vehicleId: string | number, imageUrls: string[]) => {
     if (!imageUrls || imageUrls.length <= 1) return;
     
     try {
       const now = new Date().toISOString();
-      // Préparer l'ID du véhicule dans le format approprié
+      // Convertir l'ID du véhicule en integer
       const formattedVehicleId = formatVehicleId(vehicleId);
       
       // Insérer uniquement les images supplémentaires (à partir de l'index 1)
@@ -20,19 +20,18 @@ export function useVehicleAdditionalImages() {
       
       if (additionalImages.length === 0) return;
       
-      // Capture l'erreur silencieusement si la table n'existe pas encore
+      // Essayer d'insérer dans la table vehicle_images
       try {
-        // Using type assertion to bypass TypeScript validation
         const { error } = await supabase
-          .from('vehicle_images' as any)
-          .insert(additionalImages as any);
+          .from('vehicle_images')
+          .insert(additionalImages);
           
         if (error) {
           console.error("Erreur lors de l'ajout des images supplémentaires:", error);
         }
       } catch (insertError) {
         console.error("Erreur lors de l'insertion des images supplémentaires:", insertError);
-        // Table might not exist yet - this is expected in some cases
+        // La table pourrait ne pas exister encore
       }
     } catch (error) {
       console.error("Erreur lors de la préparation des images supplémentaires:", error);
