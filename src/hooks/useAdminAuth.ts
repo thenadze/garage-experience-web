@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/components/ui/use-toast';
+import { UserRole } from '@/hooks/usePermissions';
 
 export function useAdminAuth() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -69,7 +70,8 @@ export function useAdminAuth() {
                 id: session.user.id,
                 first_name: "Admin", // Valeur par défaut
                 last_name: "User",   // Valeur par défaut
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                role: "admin" as UserRole // Par défaut, le premier utilisateur est admin
               })
               .select()
               .single();
@@ -114,7 +116,20 @@ export function useAdminAuth() {
             ...prev,
             profile: adminData
           }));
-          setIsAdmin(true);
+          
+          // Si l'utilisateur a un rôle, on vérifie qu'il s'agit bien d'un admin ou qu'il a au moins un accès
+          const userRole = adminData.role as UserRole | undefined;
+          
+          if (!userRole) {
+            // Si aucun rôle défini, on le considère comme admin (pour la rétrocompatibilité)
+            setIsAdmin(true);
+          } else if (userRole === 'admin') {
+            setIsAdmin(true);
+          } else {
+            // Pour les autres rôles, on permet l'accès à l'interface admin
+            // mais les permissions seront gérées par le composant PermissionGuard
+            setIsAdmin(true);
+          }
         }
       } catch (error) {
         console.error("Erreur lors de la vérification du statut admin:", error);

@@ -6,19 +6,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminLogin from "@/components/admin/AdminLogin";
 import VehiclesList from "@/components/admin/VehiclesList";
 import VehicleForm from "@/components/admin/VehicleForm";
-import { Car, Eye, LogOut, Plus } from "lucide-react";
+import { Car, Eye, LogOut, Plus, Users, Settings } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { setupSupabaseResources } from "@/integrations/supabase/setup";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { usePermissions } from "@/hooks/usePermissions";
+import PermissionGuard from "@/components/admin/PermissionGuard";
+import UserRoleBadge from "@/components/admin/UserRoleBadge";
+import UserInviteDialog from "@/components/admin/UserInviteDialog";
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState<string>("list");
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
   const [setupComplete, setSetupComplete] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isAdmin, loading: authLoading, logout } = useAdminAuth();
+  const { isAdmin, loading: authLoading, logout, user } = useAdminAuth();
+  const { userRole, loading: permissionsLoading, hasPermission } = usePermissions();
 
   // Setup Supabase resources when admin is authenticated
   useEffect(() => {
@@ -49,11 +55,27 @@ const Admin = () => {
   };
 
   const handleEditVehicle = (vehicle: any) => {
+    if (!hasPermission("edit")) {
+      toast({
+        variant: "destructive",
+        title: "Accès refusé",
+        description: "Vous n'avez pas les permissions nécessaires pour modifier les véhicules.",
+      });
+      return;
+    }
     setSelectedVehicle(vehicle);
     setActiveTab("edit");
   };
 
   const handleAddVehicle = () => {
+    if (!hasPermission("add")) {
+      toast({
+        variant: "destructive",
+        title: "Accès refusé",
+        description: "Vous n'avez pas les permissions nécessaires pour ajouter des véhicules.",
+      });
+      return;
+    }
     setSelectedVehicle(null); // Reset selected vehicle for a new one
     setActiveTab("add");
   };
@@ -73,7 +95,19 @@ const Admin = () => {
     navigate("/");
   };
 
-  if (authLoading) {
+  const handleOpenInviteDialog = () => {
+    if (!hasPermission("users")) {
+      toast({
+        variant: "destructive",
+        title: "Accès refusé",
+        description: "Vous n'avez pas les permissions nécessaires pour inviter des utilisateurs.",
+      });
+      return;
+    }
+    setShowInviteDialog(true);
+  };
+
+  if (authLoading || permissionsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-garage-red border-t-transparent rounded-full"></div>
@@ -92,8 +126,23 @@ const Admin = () => {
         <div className="flex items-center gap-2">
           <Car className="h-6 w-6" />
           <h1 className="text-xl font-bold">Admin Garage</h1>
+          {userRole && (
+            <div className="ml-3">
+              <UserRoleBadge role={userRole} />
+            </div>
+          )}
         </div>
         <div className="flex gap-3">
+          {hasPermission("users") && (
+            <Button
+              variant="outline"
+              className="border-white text-white hover:text-garage-black"
+              onClick={handleOpenInviteDialog}
+            >
+              <Users className="mr-2 h-4 w-4" />
+              Inviter un utilisateur
+            </Button>
+          )}
           <Button
             variant="outline"
             className="border-white text-white hover:text-garage-black"
@@ -118,34 +167,80 @@ const Admin = () => {
           <div className="flex justify-between items-center mb-6">
             <TabsList>
               <TabsTrigger value="list">Liste des véhicules</TabsTrigger>
-              <TabsTrigger value="add">Ajouter un véhicule</TabsTrigger>
-              {selectedVehicle && (
+              {hasPermission("add") && (
+                <TabsTrigger value="add">Ajouter un véhicule</TabsTrigger>
+              )}
+              {selectedVehicle && hasPermission("edit") && (
                 <TabsTrigger value="edit">Modifier un véhicule</TabsTrigger>
               )}
+              {hasPermission("settings") && (
+                <TabsTrigger value="settings">Paramètres</TabsTrigger>
+              )}
+              {hasPermission("users") && (
+                <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+              )}
             </TabsList>
-            <Button onClick={handleAddVehicle} className="bg-garage-red hover:bg-garage-red/90">
-              <Plus className="mr-2 h-4 w-4" />
-              Nouvelle annonce
-            </Button>
+            {hasPermission("add") && (
+              <Button onClick={handleAddVehicle} className="bg-garage-red hover:bg-garage-red/90">
+                <Plus className="mr-2 h-4 w-4" />
+                Nouvelle annonce
+              </Button>
+            )}
           </div>
           
           <TabsContent value="list" className="bg-white rounded-lg shadow p-6">
-            <VehiclesList onEdit={handleEditVehicle} />
+            <PermissionGuard requiredPermission="list">
+              <VehiclesList onEdit={handleEditVehicle} />
+            </PermissionGuard>
           </TabsContent>
           
           <TabsContent value="add" className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-2xl font-bold mb-6">Ajouter un nouveau véhicule</h2>
-            <VehicleForm onSuccess={handleFormSuccess} />
+            <PermissionGuard requiredPermission="add">
+              <h2 className="text-2xl font-bold mb-6">Ajouter un nouveau véhicule</h2>
+              <VehicleForm onSuccess={handleFormSuccess} />
+            </PermissionGuard>
           </TabsContent>
           
           <TabsContent value="edit" className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-2xl font-bold mb-6">Modifier un véhicule</h2>
-            {selectedVehicle && (
-              <VehicleForm vehicle={selectedVehicle} onSuccess={handleFormSuccess} />
-            )}
+            <PermissionGuard requiredPermission="edit">
+              <h2 className="text-2xl font-bold mb-6">Modifier un véhicule</h2>
+              {selectedVehicle && (
+                <VehicleForm vehicle={selectedVehicle} onSuccess={handleFormSuccess} />
+              )}
+            </PermissionGuard>
+          </TabsContent>
+          
+          <TabsContent value="settings" className="bg-white rounded-lg shadow p-6">
+            <PermissionGuard requiredPermission="settings">
+              <h2 className="text-2xl font-bold mb-6">Paramètres</h2>
+              <p className="text-gray-500">
+                Cette section vous permet de configurer les paramètres de l'application.
+              </p>
+              {/* Contenu des paramètres à implémenter ultérieurement */}
+            </PermissionGuard>
+          </TabsContent>
+          
+          <TabsContent value="users" className="bg-white rounded-lg shadow p-6">
+            <PermissionGuard requiredPermission="users">
+              <h2 className="text-2xl font-bold mb-6">Gestion des utilisateurs</h2>
+              <div className="flex justify-end mb-4">
+                <Button onClick={handleOpenInviteDialog} className="bg-garage-red hover:bg-garage-red/90">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Inviter un utilisateur
+                </Button>
+              </div>
+              <UserManagementTable />
+            </PermissionGuard>
           </TabsContent>
         </Tabs>
       </div>
+      
+      {showInviteDialog && (
+        <UserInviteDialog 
+          open={showInviteDialog} 
+          onClose={() => setShowInviteDialog(false)}
+        />
+      )}
     </div>
   );
 };
