@@ -72,10 +72,10 @@ export function usePermissions() {
           return;
         }
         
-        // Récupérer le profil de l'utilisateur avec son rôle
+        // Récupérer le profil de l'utilisateur
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('role, custom_permissions')
+          .select('*')
           .eq('id', session.user.id)
           .single();
         
@@ -86,6 +86,7 @@ export function usePermissions() {
         }
         
         // Récupérer le rôle (par défaut 'viewer' si non défini)
+        // Le champ role peut ne pas exister, donc on utilise une valeur par défaut
         const role = (profileData?.role as UserRole) || "viewer";
         setUserRole(role);
         

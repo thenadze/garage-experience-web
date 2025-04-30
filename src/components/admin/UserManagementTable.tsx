@@ -53,15 +53,16 @@ const UserManagementTable = () => {
 
         if (data) {
           // Pour chaque profil, récupérer l'email depuis la table auth.users
+          // et ajouter les champs role et custom_permissions par défaut s'ils n'existent pas
           const usersWithEmail = await Promise.all(
             data.map(async (profile) => {
               // Dans une vraie application, vous utiliseriez une fonction serveur ou une vue pour récupérer les emails
-              // Pour cette démo, nous allons simuler les emails
               return {
                 ...profile,
                 email: `user-${profile.id.substring(0, 6)}@example.com`,
-                role: profile.role || 'viewer'
-              };
+                role: profile.role || 'viewer' as UserRole,
+                custom_permissions: profile.custom_permissions || null
+              } as UserProfile;
             })
           );
           

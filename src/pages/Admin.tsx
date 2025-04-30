@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import PermissionGuard from "@/components/admin/PermissionGuard";
 import UserRoleBadge from "@/components/admin/UserRoleBadge";
 import UserInviteDialog from "@/components/admin/UserInviteDialog";
+import UserManagementTable from "@/components/admin/UserManagementTable";
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState<string>("list");
