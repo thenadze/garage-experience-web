@@ -15,6 +15,17 @@ export interface TabPermissions {
   users?: boolean;   // Gestion des utilisateurs (futur)
 }
 
+// Interface étendue pour les profils utilisateurs avec des champs additionnels
+export interface ExtendedProfile {
+  id: string;
+  created_at: string;
+  first_name: string;
+  last_name: string;
+  role?: UserRole;
+  custom_permissions?: TabPermissions | null;
+  invited_by?: string | null;
+}
+
 // Configuration par défaut des permissions selon le rôle
 const DEFAULT_PERMISSIONS: Record<UserRole, TabPermissions> = {
   admin: {
@@ -85,13 +96,15 @@ export function usePermissions() {
           return;
         }
         
+        // Cast the profile data to our extended type that includes role and custom_permissions
+        const extendedProfile = profileData as unknown as ExtendedProfile;
+        
         // Récupérer le rôle (par défaut 'viewer' si non défini)
-        // Le champ role peut ne pas exister, donc on utilise une valeur par défaut
-        const role = (profileData?.role as UserRole) || "viewer";
+        const role = extendedProfile?.role || "viewer";
         setUserRole(role);
         
         // Utiliser les permissions personnalisées ou les permissions par défaut selon le rôle
-        const userPermissions = profileData?.custom_permissions || DEFAULT_PERMISSIONS[role];
+        const userPermissions = extendedProfile?.custom_permissions || DEFAULT_PERMISSIONS[role];
         setPermissions(userPermissions);
         
       } catch (err) {

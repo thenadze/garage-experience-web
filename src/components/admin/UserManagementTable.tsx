@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole } from "@/hooks/usePermissions";
+import { UserRole, ExtendedProfile } from "@/hooks/usePermissions";
 import UserRoleBadge from "./UserRoleBadge";
 import { Button } from "@/components/ui/button";
 import { TrashIcon, Edit, Shield } from "lucide-react";
@@ -15,14 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface UserProfile {
-  id: string;
+interface UserProfile extends ExtendedProfile {
   email: string;
-  role: UserRole;
-  first_name: string;
-  last_name: string;
-  created_at: string;
-  custom_permissions: any | null;
 }
 
 const UserManagementTable = () => {
@@ -56,12 +50,15 @@ const UserManagementTable = () => {
           // et ajouter les champs role et custom_permissions par défaut s'ils n'existent pas
           const usersWithEmail = await Promise.all(
             data.map(async (profile) => {
+              // Cast the profile to our extended type
+              const extendedProfile = profile as unknown as ExtendedProfile;
+              
               // Dans une vraie application, vous utiliseriez une fonction serveur ou une vue pour récupérer les emails
               return {
-                ...profile,
+                ...extendedProfile,
                 email: `user-${profile.id.substring(0, 6)}@example.com`,
-                role: profile.role || 'viewer' as UserRole,
-                custom_permissions: profile.custom_permissions || null
+                role: extendedProfile.role || 'viewer' as UserRole,
+                custom_permissions: extendedProfile.custom_permissions || null
               } as UserProfile;
             })
           );

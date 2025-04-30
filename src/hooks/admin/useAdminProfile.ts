@@ -2,14 +2,10 @@
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/components/ui/use-toast';
-import { UserRole } from '@/hooks/usePermissions';
+import { UserRole, ExtendedProfile } from '@/hooks/usePermissions';
 
-interface AdminProfile {
-  id: string;
+interface AdminProfile extends ExtendedProfile {
   role?: UserRole;
-  created_at?: string;
-  first_name?: string;
-  last_name?: string;
 }
 
 export function useAdminProfile() {
@@ -83,9 +79,14 @@ export function useAdminProfile() {
             }));
             
             // Since the role field might not exist in the database, we'll consider this user an admin
+            const extendedProfile = {
+              ...insertData,
+              role: 'admin' as UserRole
+            } as AdminProfile;
+            
             return { 
               success: true,
-              profile: {...insertData, role: 'admin'} as AdminProfile,
+              profile: extendedProfile,
               isAdmin: true
             };
           }
@@ -101,9 +102,14 @@ export function useAdminProfile() {
         
         // Assume the user is an admin, since we're in the admin authentication flow
         // This ensures backward compatibility with existing profiles that don't have a role field
+        const extendedProfile = {
+          ...adminData,
+          role: 'admin' as UserRole
+        } as AdminProfile;
+        
         return { 
           success: true, 
-          profile: {...adminData, role: 'admin'} as AdminProfile,
+          profile: extendedProfile,
           isAdmin: true 
         };
       }
