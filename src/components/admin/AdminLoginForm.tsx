@@ -2,7 +2,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 
 interface AdminLoginFormProps {
   email: string;
@@ -11,6 +11,7 @@ interface AdminLoginFormProps {
   setPassword: (password: string) => void;
   loading: boolean;
   error: string;
+  rslHelp?: string;
   onSubmit: (e: React.FormEvent) => void;
   onCreateAccount: () => void;
 }
@@ -22,6 +23,7 @@ const AdminLoginForm = ({
   setPassword,
   loading,
   error,
+  rslHelp,
   onSubmit,
   onCreateAccount
 }: AdminLoginFormProps) => {
@@ -31,6 +33,13 @@ const AdminLoginForm = ({
         <Alert variant="destructive" className="bg-red-100">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
+      {rslHelp && (
+        <Alert className="bg-amber-50 border border-amber-200 text-amber-800">
+          <Info className="h-4 w-4 text-amber-800" />
+          <AlertDescription className="whitespace-pre-wrap text-xs">{rslHelp}</AlertDescription>
         </Alert>
       )}
       

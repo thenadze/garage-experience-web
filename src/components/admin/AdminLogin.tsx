@@ -18,6 +18,7 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
     setPassword,
     loading,
     error,
+    rslHelp,
     handleLogin
   } = useAdminLogin(onSuccess);
 
@@ -65,6 +66,7 @@ const AdminLogin = ({ onSuccess }: AdminLoginProps) => {
           setPassword={setPassword}
           loading={loading || signUpLoading}
           error={error}
+          rslHelp={rslHelp}
           onSubmit={handleSubmitForm}
           onCreateAccount={handleDebugSignUp}
         />
